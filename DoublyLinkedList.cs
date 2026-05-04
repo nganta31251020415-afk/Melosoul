@@ -10,7 +10,7 @@ using System.Threading;
 public class Song
 {
     public string ID { get; private set; }
-    public string Title { get; private set; }
+    public string Title { get; set; }
     public string Artist { get; private set; }
     public string FilePath { get; private set; }
 

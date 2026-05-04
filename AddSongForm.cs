@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
+using WMPLib;
 
 namespace Melosoul
 {
@@ -18,8 +20,42 @@ namespace Melosoul
             dlg.Filter = "MP3 files|*.mp3|All files|*.*";
             dlg.Title = "Chọn file nhạc";
             if (dlg.ShowDialog() == DialogResult.OK)
+            {
                 txtPath.Text = dlg.FileName;
+                LoadMetadataFromFile(dlg.FileName);
+            }
             dlg.Dispose();
+        }
+
+        private void LoadMetadataFromFile(string filePath)
+        {
+            try
+            {
+                var player = new WindowsMediaPlayer();
+                var media = player.newMedia(filePath);
+                string title = media.getItemInfo("Title");
+                string artist = media.getItemInfo("Author");
+                if (string.IsNullOrWhiteSpace(artist))
+                    artist = media.getItemInfo("WM/AlbumArtist");
+                if (string.IsNullOrWhiteSpace(artist))
+                    artist = media.getItemInfo("WM/Artist");
+
+                if (string.IsNullOrWhiteSpace(txtTitle.Text))
+                    txtTitle.Text = string.IsNullOrWhiteSpace(title)
+                        ? System.IO.Path.GetFileNameWithoutExtension(filePath)
+                        : title.Trim();
+
+                if (string.IsNullOrWhiteSpace(txtArtist.Text) && !string.IsNullOrWhiteSpace(artist))
+                    txtArtist.Text = artist.Trim();
+
+                Marshal.ReleaseComObject(media);
+                Marshal.ReleaseComObject(player);
+            }
+            catch
+            {
+                if (string.IsNullOrWhiteSpace(txtTitle.Text))
+                    txtTitle.Text = System.IO.Path.GetFileNameWithoutExtension(filePath);
+            }
         }
 
         private void btnConfirm_Click(object sender, EventArgs e)

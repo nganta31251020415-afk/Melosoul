@@ -1,0 +1,143 @@
+using System;
+using System.Drawing;
+using System.Windows.Forms;
+
+namespace Melosoul
+{
+    public partial class RenameSongForm : Form
+    {
+        public string SongTitle { get; set; }
+
+        public RenameSongForm(string currentTitle)
+        {
+            InitializeComponent();
+            SongTitle = currentTitle;
+            txtTitle.Text = currentTitle;
+            ApplyTheme();
+        }
+
+        private void ApplyTheme()
+        {
+            this.BackColor = Color.FromArgb(30, 30, 30);
+            this.ForeColor = Color.FromArgb(200, 200, 200);
+            this.Font = new Font("Segoe UI", 9f);
+
+            lblTitle.ForeColor = Color.FromArgb(200, 130, 160);
+            lblTitle.Font = new Font("Segoe UI", 10f, FontStyle.Bold);
+
+            txtTitle.BackColor = Color.FromArgb(50, 50, 50);
+            txtTitle.ForeColor = Color.FromArgb(220, 220, 220);
+            txtTitle.Font = new Font("Segoe UI", 9f);
+            txtTitle.BorderStyle = BorderStyle.FixedSingle;
+
+            btnOK.BackColor = Color.FromArgb(80, 30, 60);
+            btnOK.ForeColor = Color.FromArgb(255, 175, 200);
+            btnOK.FlatStyle = FlatStyle.Flat;
+            btnOK.FlatAppearance.BorderColor = Color.FromArgb(100, 50, 80);
+            btnOK.Font = new Font("Segoe UI", 9f);
+
+            btnCancel.BackColor = Color.FromArgb(50, 50, 50);
+            btnCancel.ForeColor = Color.FromArgb(180, 180, 180);
+            btnCancel.FlatStyle = FlatStyle.Flat;
+            btnCancel.FlatAppearance.BorderColor = Color.FromArgb(70, 70, 70);
+            btnCancel.Font = new Font("Segoe UI", 9f);
+        }
+
+        private void InitializeComponent()
+        {
+            this.lblTitle = new System.Windows.Forms.Label();
+            this.txtTitle = new System.Windows.Forms.TextBox();
+            this.btnOK = new System.Windows.Forms.Button();
+            this.btnCancel = new System.Windows.Forms.Button();
+            this.SuspendLayout();
+
+            // lblTitle
+            this.lblTitle.AutoSize = true;
+            this.lblTitle.Location = new System.Drawing.Point(12, 20);
+            this.lblTitle.Name = "lblTitle";
+            this.lblTitle.Size = new System.Drawing.Size(102, 15);
+            this.lblTitle.TabIndex = 0;
+            this.lblTitle.Text = "Tên bài hát:";
+
+            // txtTitle
+            this.txtTitle.Location = new System.Drawing.Point(12, 45);
+            this.txtTitle.Name = "txtTitle";
+            this.txtTitle.Size = new System.Drawing.Size(360, 28);
+            this.txtTitle.TabIndex = 1;
+            this.txtTitle.KeyDown += new System.Windows.Forms.KeyEventHandler(this.TxtTitle_KeyDown);
+
+            // btnOK
+            this.btnOK.Location = new System.Drawing.Point(200, 85);
+            this.btnOK.Name = "btnOK";
+            this.btnOK.Size = new System.Drawing.Size(80, 32);
+            this.btnOK.TabIndex = 2;
+            this.btnOK.Text = "OK";
+            this.btnOK.UseVisualStyleBackColor = true;
+            this.btnOK.Click += new System.EventHandler(this.BtnOK_Click);
+
+            // btnCancel
+            this.btnCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
+            this.btnCancel.Location = new System.Drawing.Point(292, 85);
+            this.btnCancel.Name = "btnCancel";
+            this.btnCancel.Size = new System.Drawing.Size(80, 32);
+            this.btnCancel.TabIndex = 3;
+            this.btnCancel.Text = "Hủy";
+            this.btnCancel.UseVisualStyleBackColor = true;
+
+            // RenameSongForm
+            this.AutoScaleDimensions = new System.Drawing.SizeF(7f, 15f);
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.CancelButton = this.btnCancel;
+            this.ClientSize = new System.Drawing.Size(384, 130);
+            this.ControlBox = true;
+            this.Controls.Add(this.lblTitle);
+            this.Controls.Add(this.txtTitle);
+            this.Controls.Add(this.btnOK);
+            this.Controls.Add(this.btnCancel);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
+            this.MaximizeBox = false;
+            this.MinimizeBox = false;
+            this.Name = "RenameSongForm";
+            this.ShowIcon = false;
+            this.ShowInTaskbar = false;
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
+            this.Text = "Đổi tên bài hát";
+            this.ResumeLayout(false);
+            this.PerformLayout();
+        }
+
+        private void TxtTitle_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Return)
+            {
+                e.SuppressKeyPress = true;
+                BtnOK_Click(null, null);
+            }
+            else if (e.KeyCode == Keys.Escape)
+            {
+                e.SuppressKeyPress = true;
+                this.DialogResult = DialogResult.Cancel;
+                this.Close();
+            }
+        }
+
+        private void BtnOK_Click(object sender, EventArgs e)
+        {
+            SongTitle = txtTitle.Text.Trim();
+            if (string.IsNullOrWhiteSpace(SongTitle))
+            {
+                MessageBox.Show("Tên bài hát không được để trống.", "Lỗi", 
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                txtTitle.Focus();
+                return;
+            }
+            this.DialogResult = DialogResult.OK;
+            this.Close();
+        }
+
+        private System.Windows.Forms.Label lblTitle;
+        private System.Windows.Forms.TextBox txtTitle;
+        private System.Windows.Forms.Button btnOK;
+        private System.Windows.Forms.Button btnCancel;
+    }
+}

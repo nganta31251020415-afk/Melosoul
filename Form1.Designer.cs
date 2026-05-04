@@ -33,6 +33,7 @@
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
             this.pnlTop = new System.Windows.Forms.Panel();
+            this.btnReset = new System.Windows.Forms.Button();
             this.btnSort = new System.Windows.Forms.Button();
             this.btnSave = new System.Windows.Forms.Button();
             this.btnRemove = new System.Windows.Forms.Button();
@@ -62,12 +63,14 @@
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.lblStatus = new System.Windows.Forms.ToolStripStatusLabel();
             this.lblSongCount = new System.Windows.Forms.ToolStripStatusLabel();
+            this.lblLoadTime = new System.Windows.Forms.ToolStripStatusLabel();
             this.kryptonManager1 = new ComponentFactory.Krypton.Toolkit.KryptonManager(this.components);
             this.listBoxPlaylist = new System.Windows.Forms.DataGridView();
             this.colNum = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colTitle = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colArtist = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colDuration = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colImage = new System.Windows.Forms.DataGridViewImageColumn();
             this.pnlTop.SuspendLayout();
             this.pnlSearch.SuspendLayout();
             this.pnlRight.SuspendLayout();
@@ -81,6 +84,7 @@
             // pnlTop
             // 
             this.pnlTop.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(45)))), ((int)(((byte)(45)))), ((int)(((byte)(45)))));
+            this.pnlTop.Controls.Add(this.btnReset);
             this.pnlTop.Controls.Add(this.btnSort);
             this.pnlTop.Controls.Add(this.btnSave);
             this.pnlTop.Controls.Add(this.btnRemove);
@@ -92,6 +96,21 @@
             this.pnlTop.Name = "pnlTop";
             this.pnlTop.Size = new System.Drawing.Size(947, 50);
             this.pnlTop.TabIndex = 0;
+            // 
+            // btnReset
+            // 
+            this.btnReset.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(58)))), ((int)(((byte)(58)))), ((int)(((byte)(58)))));
+            this.btnReset.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.btnReset.FlatAppearance.BorderSize = 0;
+            this.btnReset.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnReset.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(238)))), ((int)(((byte)(0)))), ((int)(((byte)(85)))));
+            this.btnReset.Location = new System.Drawing.Point(494, 9);
+            this.btnReset.Name = "btnReset";
+            this.btnReset.Size = new System.Drawing.Size(85, 32);
+            this.btnReset.TabIndex = 9;
+            this.btnReset.Text = "Reset";
+            this.btnReset.UseVisualStyleBackColor = false;
+            this.btnReset.Click += new System.EventHandler(this.btnReset_Click);
             // 
             // btnSort
             // 
@@ -248,6 +267,7 @@
             this.Shuffle.TabIndex = 14;
             this.Shuffle.Text = "🔀 Shuffle";
             this.Shuffle.UseVisualStyleBackColor = true;
+            this.Shuffle.CheckedChanged += new System.EventHandler(this.Shuffle_CheckedChanged);
             // 
             // lblmax
             // 
@@ -255,9 +275,9 @@
             this.lblmax.FlatAppearance.BorderSize = 0;
             this.lblmax.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.lblmax.ForeColor = System.Drawing.SystemColors.ButtonFace;
-            this.lblmax.Location = new System.Drawing.Point(183, 390);
+            this.lblmax.Location = new System.Drawing.Point(190, 389);
             this.lblmax.Name = "lblmax";
-            this.lblmax.Size = new System.Drawing.Size(47, 32);
+            this.lblmax.Size = new System.Drawing.Size(31, 32);
             this.lblmax.TabIndex = 11;
             this.lblmax.Text = "🔊";
             this.lblmax.UseVisualStyleBackColor = false;
@@ -266,7 +286,7 @@
             // 
             this.lblmin.AutoSize = true;
             this.lblmin.ForeColor = System.Drawing.SystemColors.ButtonFace;
-            this.lblmin.Location = new System.Drawing.Point(14, 398);
+            this.lblmin.Location = new System.Drawing.Point(17, 398);
             this.lblmin.Name = "lblmin";
             this.lblmin.Size = new System.Drawing.Size(19, 15);
             this.lblmin.TabIndex = 10;
@@ -280,7 +300,7 @@
             this.groupBox1.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(85)))), ((int)(((byte)(85)))), ((int)(((byte)(85)))));
             this.groupBox1.Location = new System.Drawing.Point(20, 282);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(200, 53);
+            this.groupBox1.Size = new System.Drawing.Size(198, 66);
             this.groupBox1.TabIndex = 4;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Điều khiển";
@@ -323,11 +343,11 @@
             this.btnPlay.Cursor = System.Windows.Forms.Cursors.Hand;
             this.btnPlay.FlatAppearance.BorderSize = 0;
             this.btnPlay.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnPlay.Font = new System.Drawing.Font("Segoe UI", 13.125F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnPlay.Font = new System.Drawing.Font("Segoe UI", 15.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnPlay.ForeColor = System.Drawing.Color.Black;
-            this.btnPlay.Location = new System.Drawing.Point(76, 16);
+            this.btnPlay.Location = new System.Drawing.Point(72, 14);
             this.btnPlay.Name = "btnPlay";
-            this.btnPlay.Size = new System.Drawing.Size(52, 32);
+            this.btnPlay.Size = new System.Drawing.Size(60, 40);
             this.btnPlay.TabIndex = 1;
             this.btnPlay.Text = "▶";
             this.btnPlay.UseVisualStyleBackColor = false;
@@ -338,12 +358,12 @@
             this.lblArtist.AutoSize = true;
             this.lblArtist.BackColor = System.Drawing.Color.Transparent;
             this.lblArtist.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(102)))), ((int)(((byte)(102)))), ((int)(((byte)(102)))));
-            this.lblArtist.Location = new System.Drawing.Point(30, 260);
+            this.lblArtist.Location = new System.Drawing.Point(24, 260);
             this.lblArtist.Name = "lblArtist";
             this.lblArtist.Size = new System.Drawing.Size(22, 15);
             this.lblArtist.TabIndex = 3;
             this.lblArtist.Text = "---";
-            this.lblArtist.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.lblArtist.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // progressBar
             // 
@@ -351,10 +371,11 @@
             this.progressBar.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(170)))), ((int)(((byte)(195)))));
             this.progressBar.Location = new System.Drawing.Point(24, 354);
             this.progressBar.Name = "progressBar";
-            this.progressBar.Size = new System.Drawing.Size(190, 8);
+            this.progressBar.Size = new System.Drawing.Size(190, 12);
             this.progressBar.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
             this.progressBar.TabIndex = 5;
             this.progressBar.Value = 35;
+            this.progressBar.MouseDown += new System.Windows.Forms.MouseEventHandler(this.progressBar_MouseDown);
             // 
             // lblTimeStart
             // 
@@ -380,25 +401,26 @@
             // 
             // trackVolume
             // 
-            this.trackVolume.Location = new System.Drawing.Point(30, 395);
+            this.trackVolume.Location = new System.Drawing.Point(42, 398);
             this.trackVolume.Maximum = 100;
             this.trackVolume.Name = "trackVolume";
-            this.trackVolume.Size = new System.Drawing.Size(180, 45);
+            this.trackVolume.Size = new System.Drawing.Size(151, 45);
             this.trackVolume.TabIndex = 8;
             this.trackVolume.TickStyle = System.Windows.Forms.TickStyle.None;
             this.trackVolume.Value = 70;
+            this.trackVolume.ValueChanged += new System.EventHandler(this.trackVolume_ValueChanged);
             // 
             // lblCurrentSong
             // 
             this.lblCurrentSong.BackColor = System.Drawing.Color.Transparent;
             this.lblCurrentSong.Font = new System.Drawing.Font("Segoe UI", 10.125F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblCurrentSong.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(170)))), ((int)(((byte)(195)))));
-            this.lblCurrentSong.Location = new System.Drawing.Point(-7, 218);
+            this.lblCurrentSong.Location = new System.Drawing.Point(24, 218);
             this.lblCurrentSong.Name = "lblCurrentSong";
-            this.lblCurrentSong.Size = new System.Drawing.Size(200, 42);
+            this.lblCurrentSong.Size = new System.Drawing.Size(180, 42);
             this.lblCurrentSong.TabIndex = 2;
             this.lblCurrentSong.Text = "Chưa chọn bài nào";
-            this.lblCurrentSong.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.lblCurrentSong.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // chkRepeatAll
             // 
@@ -411,11 +433,12 @@
             this.chkRepeatAll.TabIndex = 9;
             this.chkRepeatAll.Text = "🔁 Repeat All";
             this.chkRepeatAll.UseVisualStyleBackColor = true;
+            this.chkRepeatAll.CheckedChanged += new System.EventHandler(this.chkRepeatAll_CheckedChanged);
             // 
             // picAlbum
             // 
             this.picAlbum.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(42)))), ((int)(((byte)(42)))), ((int)(((byte)(42)))));
-            this.picAlbum.Location = new System.Drawing.Point(30, 35);
+            this.picAlbum.Location = new System.Drawing.Point(24, 35);
             this.picAlbum.Name = "picAlbum";
             this.picAlbum.Size = new System.Drawing.Size(180, 180);
             this.picAlbum.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
@@ -440,9 +463,11 @@
             this.statusStrip1.ImageScalingSize = new System.Drawing.Size(32, 32);
             this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.lblStatus,
-            this.lblSongCount});
+            this.lblSongCount,
+            this.lblLoadTime});
             this.statusStrip1.Location = new System.Drawing.Point(0, 681);
             this.statusStrip1.Name = "statusStrip1";
+            this.statusStrip1.Padding = new System.Windows.Forms.Padding(10, 0, 10, 0);
             this.statusStrip1.Size = new System.Drawing.Size(717, 22);
             this.statusStrip1.SizingGrip = false;
             this.statusStrip1.TabIndex = 4;
@@ -452,16 +477,33 @@
             // 
             this.lblStatus.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(85)))), ((int)(((byte)(85)))), ((int)(((byte)(85)))));
             this.lblStatus.Name = "lblStatus";
-            this.lblStatus.Size = new System.Drawing.Size(69, 17);
+            this.lblStatus.Size = new System.Drawing.Size(493, 17);
+            this.lblStatus.Spring = true;
             this.lblStatus.Text = "🎵 Sẵn sàng";
+            this.lblStatus.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // lblSongCount
             // 
+            this.lblSongCount.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Left;
+            this.lblSongCount.BorderStyle = System.Windows.Forms.Border3DStyle.Etched;
             this.lblSongCount.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(85)))), ((int)(((byte)(85)))), ((int)(((byte)(85)))));
+            this.lblSongCount.Margin = new System.Windows.Forms.Padding(8, 3, 0, 2);
             this.lblSongCount.Name = "lblSongCount";
-            this.lblSongCount.Size = new System.Drawing.Size(633, 17);
-            this.lblSongCount.Spring = true;
+            this.lblSongCount.Padding = new System.Windows.Forms.Padding(12, 0, 12, 0);
+            this.lblSongCount.Size = new System.Drawing.Size(75, 17);
             this.lblSongCount.Text = "0 bài hát";
+            // 
+            // lblLoadTime
+            // 
+            this.lblLoadTime.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Left;
+            this.lblLoadTime.BorderStyle = System.Windows.Forms.Border3DStyle.Etched;
+            this.lblLoadTime.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(85)))), ((int)(((byte)(85)))), ((int)(((byte)(85)))));
+            this.lblLoadTime.Margin = new System.Windows.Forms.Padding(8, 3, 0, 2);
+            this.lblLoadTime.Name = "lblLoadTime";
+            this.lblLoadTime.Padding = new System.Windows.Forms.Padding(12, 0, 0, 0);
+            this.lblLoadTime.Size = new System.Drawing.Size(91, 17);
+            this.lblLoadTime.Text = "Load: -- giây";
+            this.lblLoadTime.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
             // kryptonManager1
             // 
@@ -486,7 +528,8 @@
             this.colNum,
             this.colTitle,
             this.colArtist,
-            this.colDuration});
+            this.colDuration,
+            this.colImage});
             dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
             dataGridViewCellStyle2.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(26)))), ((int)(((byte)(26)))), ((int)(((byte)(26)))));
             dataGridViewCellStyle2.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
@@ -498,15 +541,17 @@
             this.listBoxPlaylist.Dock = System.Windows.Forms.DockStyle.Fill;
             this.listBoxPlaylist.GridColor = System.Drawing.Color.FromArgb(((int)(((byte)(42)))), ((int)(((byte)(42)))), ((int)(((byte)(42)))));
             this.listBoxPlaylist.Location = new System.Drawing.Point(0, 92);
+            this.listBoxPlaylist.MultiSelect = false;
             this.listBoxPlaylist.Name = "listBoxPlaylist";
             this.listBoxPlaylist.ReadOnly = true;
             this.listBoxPlaylist.RowHeadersVisible = false;
             this.listBoxPlaylist.RowHeadersWidth = 82;
-            this.listBoxPlaylist.RowTemplate.Height = 36;
+            this.listBoxPlaylist.RowTemplate.Height = 44;
             this.listBoxPlaylist.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.listBoxPlaylist.Size = new System.Drawing.Size(717, 589);
             this.listBoxPlaylist.TabIndex = 5;
             this.listBoxPlaylist.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.listBoxPlaylist_CellDoubleClick);
+            this.listBoxPlaylist.CellMouseClick += new System.Windows.Forms.DataGridViewCellMouseEventHandler(this.listBoxPlaylist_CellMouseClick);
             // 
             // colNum
             // 
@@ -539,6 +584,16 @@
             this.colDuration.MinimumWidth = 10;
             this.colDuration.Name = "colDuration";
             this.colDuration.ReadOnly = true;
+            // 
+            // colImage
+            // 
+            this.colImage.FillWeight = 45F;
+            this.colImage.HeaderText = "Hình";
+            this.colImage.ImageLayout = System.Windows.Forms.DataGridViewImageCellLayout.Zoom;
+            this.colImage.MinimumWidth = 10;
+            this.colImage.Name = "colImage";
+            this.colImage.ReadOnly = true;
+            this.colImage.Resizable = System.Windows.Forms.DataGridViewTriState.False;
             // 
             // Form1
             // 
@@ -598,13 +653,13 @@
         private System.Windows.Forms.StatusStrip statusStrip1;
         private System.Windows.Forms.ToolStripStatusLabel lblStatus;
         private System.Windows.Forms.ToolStripStatusLabel lblSongCount;
+        private System.Windows.Forms.ToolStripStatusLabel lblLoadTime;
         private System.Windows.Forms.Label lblmin;
         private System.Windows.Forms.Button lblmax;
         private System.Windows.Forms.Button btnPrev;
         private System.Windows.Forms.Label lblTimeStart;
         private System.Windows.Forms.Label lblTimeEnd;
         private ComponentFactory.Krypton.Toolkit.KryptonManager kryptonManager1;
-        private System.Windows.Forms.Button btnSave;
         private System.Windows.Forms.Button btnRemove;
         private System.Windows.Forms.Button btnSort;
         private System.Windows.Forms.DataGridView listBoxPlaylist;
@@ -612,8 +667,11 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn colTitle;
         private System.Windows.Forms.DataGridViewTextBoxColumn colArtist;
         private System.Windows.Forms.DataGridViewTextBoxColumn colDuration;
+        private System.Windows.Forms.DataGridViewImageColumn colImage;
         private System.Windows.Forms.CheckBox Shuffle;
         private System.Windows.Forms.CheckBox chkRepeatAll;
+        private System.Windows.Forms.Button btnSave;
+        private System.Windows.Forms.Button btnReset;
     }
 }
 
