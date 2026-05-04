@@ -606,8 +606,28 @@ namespace Melosoul
             colDuration.SortMode = DataGridViewColumnSortMode.NotSortable;
             colImage.SortMode = DataGridViewColumnSortMode.NotSortable;
             colImage.Visible = false;
+            ConfigureStatusSeparators();
 
             AutoLoad();
+        }
+
+        private void ConfigureStatusSeparators()
+        {
+            lblSongCount.BorderSides = ToolStripStatusLabelBorderSides.None;
+            lblLoadTime.BorderSides = ToolStripStatusLabelBorderSides.None;
+
+            lblSongCount.Paint -= StatusSeparator_Paint;
+            lblLoadTime.Paint -= StatusSeparator_Paint;
+            lblSongCount.Paint += StatusSeparator_Paint;
+            lblLoadTime.Paint += StatusSeparator_Paint;
+        }
+
+        private void StatusSeparator_Paint(object sender, PaintEventArgs e)
+        {
+            using (var pen = new Pen(Color.Black))
+            {
+                e.Graphics.DrawLine(pen, 0, 0, 0, e.ClipRectangle.Height);
+            }
         }
 
         protected override void OnFormClosing(FormClosingEventArgs e)

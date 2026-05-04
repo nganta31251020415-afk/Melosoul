@@ -4,27 +4,6 @@ using System.Linq;
 using System.Threading;
 
 
-// Sử dụng từ khóa 'init' để tạo Immutable Object.
-// Khi đã khởi tạo, các property không thể bị sửa đổi từ bên ngoài.
-// Điều này đảm bảo Index của Trie và Dictionary không bao giờ bị sai lệch.
-public class Song
-{
-    public string ID { get; private set; }
-    public string Title { get; set; }
-    public string Artist { get; private set; }
-    public string FilePath { get; private set; }
-
-
-    public Song(string id, string title, string artist, string filePath)
-    {
-        ID = id;
-        Title = title;
-        Artist = artist;
-        FilePath = filePath;
-    }
-}
-
-
 // Cần implement IDisposable vì chúng ta sử dụng ReaderWriterLockSlim
 public class DoublyLinkedList : IDisposable
 {
