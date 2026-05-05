@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 
+namespace Melosoul
+{
 
 // Cần implement IDisposable vì chúng ta sử dụng ReaderWriterLockSlim
-public class DoublyLinkedList : IDisposable
+public class PlaylistLinkedList : IDisposable
 {
     #region Node & Trie
     private class Node
@@ -119,7 +121,7 @@ public class DoublyLinkedList : IDisposable
     }
 
 
-    public DoublyLinkedList()
+    public PlaylistLinkedList()
     {
         _idIndex = new Dictionary<string, Node>(StringComparer.OrdinalIgnoreCase);
         _trie = new Trie();
@@ -466,6 +468,7 @@ public class DoublyLinkedList : IDisposable
     {
         _rwLock?.Dispose();
     }
+}
 }
 
 

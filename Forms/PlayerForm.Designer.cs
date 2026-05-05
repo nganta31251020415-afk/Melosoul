@@ -1,6 +1,6 @@
 ﻿namespace Melosoul
 {
-    partial class Form1
+    partial class PlayerForm
     {
         /// <summary>
         /// Required designer variable.
@@ -31,7 +31,7 @@
             this.components = new System.ComponentModel.Container();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(PlayerForm));
             this.pnlTop = new System.Windows.Forms.Panel();
             this.btnReset = new System.Windows.Forms.Button();
             this.btnSort = new System.Windows.Forms.Button();
@@ -55,7 +55,7 @@
             this.progressBar = new System.Windows.Forms.ProgressBar();
             this.lblTimeStart = new System.Windows.Forms.Label();
             this.lblTimeEnd = new System.Windows.Forms.Label();
-            this.trackVolume = new System.Windows.Forms.TrackBar();
+            this.trackVolume = new Melosoul.Helpers.CustomVolumeSlider();
             this.lblCurrentSong = new System.Windows.Forms.Label();
             this.chkRepeatAll = new System.Windows.Forms.CheckBox();
             this.picAlbum = new System.Windows.Forms.PictureBox();
@@ -65,7 +65,7 @@
             this.lblSongCount = new System.Windows.Forms.ToolStripStatusLabel();
             this.lblLoadTime = new System.Windows.Forms.ToolStripStatusLabel();
             this.kryptonManager1 = new ComponentFactory.Krypton.Toolkit.KryptonManager(this.components);
-            this.listBoxPlaylist = new System.Windows.Forms.DataGridView();
+            this.dgvPlaylist = new System.Windows.Forms.DataGridView();
             this.colNum = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colTitle = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colArtist = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -75,10 +75,9 @@
             this.pnlSearch.SuspendLayout();
             this.pnlRight.SuspendLayout();
             this.groupBox1.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.trackVolume)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.picAlbum)).BeginInit();
             this.statusStrip1.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.listBoxPlaylist)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.dgvPlaylist)).BeginInit();
             this.SuspendLayout();
             // 
             // pnlTop
@@ -274,10 +273,10 @@
             this.lblmax.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(34)))), ((int)(((byte)(34)))), ((int)(((byte)(34)))));
             this.lblmax.FlatAppearance.BorderSize = 0;
             this.lblmax.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.lblmax.ForeColor = System.Drawing.SystemColors.ButtonFace;
-            this.lblmax.Location = new System.Drawing.Point(190, 389);
+            this.lblmax.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(136)))), ((int)(((byte)(136)))), ((int)(((byte)(136)))));
+            this.lblmax.Location = new System.Drawing.Point(203, 388);
             this.lblmax.Name = "lblmax";
-            this.lblmax.Size = new System.Drawing.Size(31, 32);
+            this.lblmax.Size = new System.Drawing.Size(15, 24);
             this.lblmax.TabIndex = 11;
             this.lblmax.Text = "🔊";
             this.lblmax.UseVisualStyleBackColor = false;
@@ -285,8 +284,8 @@
             // lblmin
             // 
             this.lblmin.AutoSize = true;
-            this.lblmin.ForeColor = System.Drawing.SystemColors.ButtonFace;
-            this.lblmin.Location = new System.Drawing.Point(17, 398);
+            this.lblmin.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(136)))), ((int)(((byte)(136)))), ((int)(((byte)(136)))));
+            this.lblmin.Location = new System.Drawing.Point(17, 393);
             this.lblmin.Name = "lblmin";
             this.lblmin.Size = new System.Drawing.Size(19, 15);
             this.lblmin.TabIndex = 10;
@@ -401,12 +400,14 @@
             // 
             // trackVolume
             // 
-            this.trackVolume.Location = new System.Drawing.Point(42, 398);
+            this.trackVolume.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(34)))), ((int)(((byte)(34)))), ((int)(((byte)(34)))));
+            this.trackVolume.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.trackVolume.Location = new System.Drawing.Point(42, 381);
             this.trackVolume.Maximum = 100;
+            this.trackVolume.Minimum = 0;
             this.trackVolume.Name = "trackVolume";
-            this.trackVolume.Size = new System.Drawing.Size(151, 45);
+            this.trackVolume.Size = new System.Drawing.Size(151, 32);
             this.trackVolume.TabIndex = 8;
-            this.trackVolume.TickStyle = System.Windows.Forms.TickStyle.None;
             this.trackVolume.Value = 70;
             this.trackVolume.ValueChanged += new System.EventHandler(this.trackVolume_ValueChanged);
             // 
@@ -465,10 +466,10 @@
             this.lblStatus,
             this.lblSongCount,
             this.lblLoadTime});
-            this.statusStrip1.Location = new System.Drawing.Point(0, 681);
+            this.statusStrip1.Location = new System.Drawing.Point(0, 679);
             this.statusStrip1.Name = "statusStrip1";
             this.statusStrip1.Padding = new System.Windows.Forms.Padding(10, 0, 10, 0);
-            this.statusStrip1.Size = new System.Drawing.Size(717, 22);
+            this.statusStrip1.Size = new System.Drawing.Size(717, 24);
             this.statusStrip1.SizingGrip = false;
             this.statusStrip1.TabIndex = 4;
             this.statusStrip1.Text = "statusStrip1";
@@ -477,7 +478,7 @@
             // 
             this.lblStatus.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(85)))), ((int)(((byte)(85)))), ((int)(((byte)(85)))));
             this.lblStatus.Name = "lblStatus";
-            this.lblStatus.Size = new System.Drawing.Size(493, 17);
+            this.lblStatus.Size = new System.Drawing.Size(511, 19);
             this.lblStatus.Spring = true;
             this.lblStatus.Text = "🎵 Sẵn sàng";
             this.lblStatus.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -490,7 +491,7 @@
             this.lblSongCount.Margin = new System.Windows.Forms.Padding(8, 3, 0, 2);
             this.lblSongCount.Name = "lblSongCount";
             this.lblSongCount.Padding = new System.Windows.Forms.Padding(12, 0, 12, 0);
-            this.lblSongCount.Size = new System.Drawing.Size(75, 17);
+            this.lblSongCount.Size = new System.Drawing.Size(80, 19);
             this.lblSongCount.Text = "0 bài hát";
             // 
             // lblLoadTime
@@ -501,7 +502,7 @@
             this.lblLoadTime.Margin = new System.Windows.Forms.Padding(8, 3, 0, 2);
             this.lblLoadTime.Name = "lblLoadTime";
             this.lblLoadTime.Padding = new System.Windows.Forms.Padding(12, 0, 0, 0);
-            this.lblLoadTime.Size = new System.Drawing.Size(91, 17);
+            this.lblLoadTime.Size = new System.Drawing.Size(90, 19);
             this.lblLoadTime.Text = "Load: -- giây";
             this.lblLoadTime.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
@@ -509,12 +510,12 @@
             // 
             this.kryptonManager1.GlobalPaletteMode = ComponentFactory.Krypton.Toolkit.PaletteModeManager.Office2010Black;
             // 
-            // listBoxPlaylist
+            // dgvPlaylist
             // 
-            this.listBoxPlaylist.AllowUserToAddRows = false;
-            this.listBoxPlaylist.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
-            this.listBoxPlaylist.BackgroundColor = System.Drawing.Color.FromArgb(((int)(((byte)(26)))), ((int)(((byte)(26)))), ((int)(((byte)(26)))));
-            this.listBoxPlaylist.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.dgvPlaylist.AllowUserToAddRows = false;
+            this.dgvPlaylist.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
+            this.dgvPlaylist.BackgroundColor = System.Drawing.Color.FromArgb(((int)(((byte)(26)))), ((int)(((byte)(26)))), ((int)(((byte)(26)))));
+            this.dgvPlaylist.BorderStyle = System.Windows.Forms.BorderStyle.None;
             dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
             dataGridViewCellStyle1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(45)))), ((int)(((byte)(45)))), ((int)(((byte)(45)))));
             dataGridViewCellStyle1.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
@@ -522,9 +523,9 @@
             dataGridViewCellStyle1.SelectionBackColor = System.Drawing.SystemColors.Highlight;
             dataGridViewCellStyle1.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
             dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.listBoxPlaylist.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle1;
-            this.listBoxPlaylist.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.listBoxPlaylist.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.dgvPlaylist.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle1;
+            this.dgvPlaylist.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dgvPlaylist.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.colNum,
             this.colTitle,
             this.colArtist,
@@ -537,21 +538,21 @@
             dataGridViewCellStyle2.SelectionBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(175)))), ((int)(((byte)(200)))));
             dataGridViewCellStyle2.SelectionForeColor = System.Drawing.Color.White;
             dataGridViewCellStyle2.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
-            this.listBoxPlaylist.DefaultCellStyle = dataGridViewCellStyle2;
-            this.listBoxPlaylist.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.listBoxPlaylist.GridColor = System.Drawing.Color.FromArgb(((int)(((byte)(42)))), ((int)(((byte)(42)))), ((int)(((byte)(42)))));
-            this.listBoxPlaylist.Location = new System.Drawing.Point(0, 92);
-            this.listBoxPlaylist.MultiSelect = false;
-            this.listBoxPlaylist.Name = "listBoxPlaylist";
-            this.listBoxPlaylist.ReadOnly = true;
-            this.listBoxPlaylist.RowHeadersVisible = false;
-            this.listBoxPlaylist.RowHeadersWidth = 82;
-            this.listBoxPlaylist.RowTemplate.Height = 44;
-            this.listBoxPlaylist.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.listBoxPlaylist.Size = new System.Drawing.Size(717, 589);
-            this.listBoxPlaylist.TabIndex = 5;
-            this.listBoxPlaylist.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.listBoxPlaylist_CellDoubleClick);
-            this.listBoxPlaylist.CellMouseClick += new System.Windows.Forms.DataGridViewCellMouseEventHandler(this.listBoxPlaylist_CellMouseClick);
+            this.dgvPlaylist.DefaultCellStyle = dataGridViewCellStyle2;
+            this.dgvPlaylist.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.dgvPlaylist.GridColor = System.Drawing.Color.FromArgb(((int)(((byte)(42)))), ((int)(((byte)(42)))), ((int)(((byte)(42)))));
+            this.dgvPlaylist.Location = new System.Drawing.Point(0, 92);
+            this.dgvPlaylist.MultiSelect = false;
+            this.dgvPlaylist.Name = "dgvPlaylist";
+            this.dgvPlaylist.ReadOnly = true;
+            this.dgvPlaylist.RowHeadersVisible = false;
+            this.dgvPlaylist.RowHeadersWidth = 82;
+            this.dgvPlaylist.RowTemplate.Height = 44;
+            this.dgvPlaylist.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
+            this.dgvPlaylist.Size = new System.Drawing.Size(717, 587);
+            this.dgvPlaylist.TabIndex = 5;
+            this.dgvPlaylist.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvPlaylist_CellDoubleClick);
+            this.dgvPlaylist.CellMouseClick += new System.Windows.Forms.DataGridViewCellMouseEventHandler(this.dgvPlaylist_CellMouseClick);
             // 
             // colNum
             // 
@@ -595,13 +596,13 @@
             this.colImage.ReadOnly = true;
             this.colImage.Resizable = System.Windows.Forms.DataGridViewTriState.False;
             // 
-            // Form1
+            // PlayerForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
             this.ClientSize = new System.Drawing.Size(947, 703);
-            this.Controls.Add(this.listBoxPlaylist);
+            this.Controls.Add(this.dgvPlaylist);
             this.Controls.Add(this.statusStrip1);
             this.Controls.Add(this.pnlRight);
             this.Controls.Add(this.pnlSearch);
@@ -610,10 +611,10 @@
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.MinimumSize = new System.Drawing.Size(800, 550);
-            this.Name = "Form1";
+            this.Name = "PlayerForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Melosoul";
-            this.Load += new System.EventHandler(this.Form1_Load);
+            this.Load += new System.EventHandler(this.PlayerForm_Load);
             this.pnlTop.ResumeLayout(false);
             this.pnlTop.PerformLayout();
             this.pnlSearch.ResumeLayout(false);
@@ -621,11 +622,10 @@
             this.pnlRight.ResumeLayout(false);
             this.pnlRight.PerformLayout();
             this.groupBox1.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.trackVolume)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.picAlbum)).EndInit();
             this.statusStrip1.ResumeLayout(false);
             this.statusStrip1.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.listBoxPlaylist)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.dgvPlaylist)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -649,7 +649,7 @@
         private System.Windows.Forms.Button btnPlay;
         private System.Windows.Forms.Button btnNext;
         private System.Windows.Forms.ProgressBar progressBar;
-        private System.Windows.Forms.TrackBar trackVolume;
+        private Melosoul.Helpers.CustomVolumeSlider trackVolume;
         private System.Windows.Forms.StatusStrip statusStrip1;
         private System.Windows.Forms.ToolStripStatusLabel lblStatus;
         private System.Windows.Forms.ToolStripStatusLabel lblSongCount;
@@ -662,7 +662,7 @@
         private ComponentFactory.Krypton.Toolkit.KryptonManager kryptonManager1;
         private System.Windows.Forms.Button btnRemove;
         private System.Windows.Forms.Button btnSort;
-        private System.Windows.Forms.DataGridView listBoxPlaylist;
+        private System.Windows.Forms.DataGridView dgvPlaylist;
         private System.Windows.Forms.DataGridViewTextBoxColumn colNum;
         private System.Windows.Forms.DataGridViewTextBoxColumn colTitle;
         private System.Windows.Forms.DataGridViewTextBoxColumn colArtist;
@@ -674,4 +674,6 @@
         private System.Windows.Forms.Button btnReset;
     }
 }
+
+
 

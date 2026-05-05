@@ -5,11 +5,11 @@ using WMPLib;
 
 namespace Melosoul
 {
-    public partial class AddSongForm : Form
+    public partial class AddSongDialog : Form
     {
         public Song ResultSong { get; private set; }
 
-        public AddSongForm()
+        public AddSongDialog()
         {
             InitializeComponent();
         }
@@ -51,8 +51,9 @@ namespace Melosoul
                 Marshal.ReleaseComObject(media);
                 Marshal.ReleaseComObject(player);
             }
-            catch
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"[Melosoul] {ex.GetType().Name}: {ex.Message}");
                 if (string.IsNullOrWhiteSpace(txtTitle.Text))
                     txtTitle.Text = System.IO.Path.GetFileNameWithoutExtension(filePath);
             }
@@ -91,3 +92,4 @@ namespace Melosoul
         }
     }
 }
+

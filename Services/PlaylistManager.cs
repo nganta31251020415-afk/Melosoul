@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -6,11 +6,11 @@ namespace Melosoul.Services
 {
     public sealed class PlaylistManager : IDisposable
     {
-        private readonly DoublyLinkedList _songs;
+        private readonly PlaylistLinkedList _songs;
 
         public PlaylistManager()
         {
-            _songs = new DoublyLinkedList();
+            _songs = new PlaylistLinkedList();
         }
 
         public int Count
@@ -109,3 +109,4 @@ namespace Melosoul.Services
         }
     }
 }
+

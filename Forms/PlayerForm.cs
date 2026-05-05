@@ -7,14 +7,17 @@ using WMPLib;
 using System.Runtime.InteropServices;
 namespace Melosoul
 {
-    public partial class Form1 : Form
+    public partial class PlayerForm : Form
     {
-        private DoublyLinkedList _playlist = new DoublyLinkedList();
+        private static readonly string[] SupportedExtensions =
+            { ".mp3", ".mp4", ".wav", ".wma", ".aac", ".flac", ".m4a" };
+
+        private PlaylistLinkedList _playlist = new PlaylistLinkedList();
         private WindowsMediaPlayer _wmp;
         private Timer _playbackTimer;
         private Timer _playlistClickTimer;
         private DataGridViewCellMouseEventArgs _pendingPlaylistClick;
-        private bool _isFirstPlay = true;
+        private int _autoNextQueued;
         private string _currentAlbumSongId;
         private readonly string _autoSavePath =
     System.IO.Path.Combine(
@@ -29,7 +32,7 @@ namespace Melosoul
         private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr,
             ref int attrValue, int attrSize);
 
-        public Form1()
+        public PlayerForm()
         {
             InitializeComponent();
             InitWMP();
@@ -75,8 +78,9 @@ namespace Melosoul
                 duration = _wmp.currentMedia.duration;
                 position = _wmp.controls.currentPosition;
             }
-            catch
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"[Melosoul] {ex.GetType().Name}: {ex.Message}");
                 duration = 0;
                 position = 0;
             }
@@ -88,6 +92,9 @@ namespace Melosoul
             {
                 int percent = (int)Math.Round((position / duration) * 100);
                 progressBar.Value = Math.Min(100, Math.Max(0, percent));
+
+                if (position >= duration - 0.1)
+                    QueueAutoNext(300);
             }
             else
             {
@@ -128,19 +135,18 @@ namespace Melosoul
                 _wmp.controls.currentPosition = target;
                 UpdatePlaybackProgress();
             }
-            catch { }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[Melosoul] {ex.GetType().Name}: {ex.Message}");
+            }
         }
 
         private void WMP_PlayStateChange(int NewState)
         {
             if (this.IsDisposed || !this.IsHandleCreated) return;
-            if (_isFirstPlay) { _isFirstPlay = false; return; }
             if (NewState == (int)WMPPlayState.wmppsMediaEnded)
             {
-                if (InvokeRequired)
-                    Invoke(new Action(AutoNext));
-                else
-                    AutoNext();
+                QueueAutoNext(300);
                 return;
             }
 
@@ -177,8 +183,27 @@ namespace Melosoul
                 _wmp.settings.volume = trackVolume.Value;
         }
 
+        private void QueueAutoNext(int delayMs)
+        {
+            if (IsDisposed || !IsHandleCreated)
+                return;
+
+            if (System.Threading.Interlocked.Exchange(ref _autoNextQueued, 1) == 1)
+                return;
+
+            BeginInvoke(new Action(() =>
+            {
+                Task.Delay(delayMs).ContinueWith(_ =>
+                {
+                    if (IsDisposed || !IsHandleCreated) return;
+                    BeginInvoke(new Action(AutoNext));
+                });
+            }));
+        }
+
         private void AutoNext()
         {
+            System.Threading.Interlocked.Exchange(ref _autoNextQueued, 0);
             int maxSkip = _playlist.Count;
             int skipped = 0;
             while (true)
@@ -202,7 +227,10 @@ namespace Melosoul
                     lines.Add($"{s.Title}|{s.Artist}|{s.FilePath}");
                 System.IO.File.WriteAllLines(_autoSavePath, lines);
             }
-            catch { }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[Melosoul] {ex.GetType().Name}: {ex.Message}");
+            }
         }
 
         private void AutoLoad()
@@ -220,7 +248,10 @@ namespace Melosoul
                 }
                 RefreshPlaylistUI();
             }
-            catch { }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[Melosoul] {ex.GetType().Name}: {ex.Message}");
+            }
         }
 
 
@@ -235,7 +266,7 @@ namespace Melosoul
             }
             try
             {
-                _isFirstPlay = true;
+                System.Threading.Interlocked.Exchange(ref _autoNextQueued, 0);
                 _wmp.URL = song.FilePath;
                 lblCurrentSong.Text = song.Title;
                 lblArtist.Text = song.Artist;
@@ -255,11 +286,15 @@ namespace Melosoul
         {
             try
             {
+                System.Threading.Interlocked.Exchange(ref _autoNextQueued, 0);
                 _wmp.controls.stop();
                 _wmp.URL = "";
                 SetPlayButtonState(false);
             }
-            catch { }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[Melosoul] {ex.GetType().Name}: {ex.Message}");
+            }
         }
 
         private string GetDuration(string filePath)
@@ -267,49 +302,33 @@ namespace Melosoul
             try
             {
                 if (!System.IO.File.Exists(filePath)) return "--:--";
-
-                var player = new WindowsMediaPlayer();
-                var media = player.newMedia(filePath);
-
-                // Chờ WMP load xong
-                int retry = 0;
-                while (media.duration <= 0 && retry < 50)
+                using (var f = TagLib.File.Create(filePath))
                 {
-                    System.Threading.Thread.Sleep(100);
-                    retry++;
+                    double dur = f.Properties.Duration.TotalSeconds;
+                    if (dur <= 0) return "--:--";
+                    int min = (int)(dur / 60);
+                    int sec = (int)(dur % 60);
+                    return $"{min}:{sec:D2}";
                 }
-
-                double dur = media.duration;
-                System.Runtime.InteropServices.Marshal.ReleaseComObject(media);
-                System.Runtime.InteropServices.Marshal.ReleaseComObject(player);
-
-                if (dur <= 0) return "--:--";
-                int min = (int)(dur / 60);
-                int sec = (int)(dur % 60);
-                return $"{min}:{sec:D2}";
             }
-            catch { return "--:--"; }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[Melosoul] {ex.GetType().Name}: {ex.Message}");
+                return "--:--";
+            }
         }
 
         private Image _albumCover;
 
-        private bool IsValidFile(Song song)
-        {
-            if (song == null) return false;
-            if (string.IsNullOrWhiteSpace(song.FilePath)) return false;
-            if (!System.IO.File.Exists(song.FilePath)) return false;
-            string ext = System.IO.Path.GetExtension(song.FilePath).ToLowerInvariant();
-            string[] supported = { ".mp3", ".mp4", ".wav", ".wma", ".aac", ".flac", ".m4a" };
-            return Array.Exists(supported, e => e == ext);
-        }
+        private bool IsValidFile(Song song) =>
+            song != null && IsValidFile(song.FilePath);
 
         private bool IsValidFile(string filePath)
         {
             if (string.IsNullOrWhiteSpace(filePath)) return false;
             if (!System.IO.File.Exists(filePath)) return false;
             string ext = System.IO.Path.GetExtension(filePath).ToLowerInvariant();
-            string[] supported = { ".mp3", ".mp4", ".wav", ".wma", ".aac", ".flac", ".m4a" };
-            return Array.Exists(supported, e => e == ext);
+            return Array.Exists(SupportedExtensions, e => e == ext);
         }
 
         private bool PlaylistContainsFile(string filePath)
@@ -321,12 +340,14 @@ namespace Melosoul
 
         private Song CreateSongFromFile(string filePath)
         {
+            WindowsMediaPlayer player = null;
+            IWMPMedia media = null;
             try
             {
                 string title = null;
                 string artist = null;
-                var player = new WindowsMediaPlayer();
-                var media = player.newMedia(filePath);
+                player = new WindowsMediaPlayer();
+                media = player.newMedia(filePath);
                 title = media.getItemInfo("Title");
                 artist = media.getItemInfo("Author");
                 if (string.IsNullOrWhiteSpace(artist))
@@ -336,15 +357,20 @@ namespace Melosoul
                 if (string.IsNullOrWhiteSpace(title))
                     title = System.IO.Path.GetFileNameWithoutExtension(filePath);
 
-                Marshal.ReleaseComObject(media);
-                Marshal.ReleaseComObject(player);
-
                 return new Song(Guid.NewGuid().ToString(), title.Trim(), artist?.Trim() ?? "", filePath);
             }
-            catch
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"[Melosoul] {ex.GetType().Name}: {ex.Message}");
                 string title = System.IO.Path.GetFileNameWithoutExtension(filePath);
                 return new Song(Guid.NewGuid().ToString(), title, string.Empty, filePath);
+            }
+            finally
+            {
+                if (media != null)
+                    Marshal.ReleaseComObject(media);
+                if (player != null)
+                    Marshal.ReleaseComObject(player);
             }
         }
 
@@ -454,7 +480,7 @@ namespace Melosoul
 
                     Bitmap loadedImage = CreateAlbumCoverImage(song);
                     if (loadedImage == null)
-                        return;
+                        loadedImage = CreateDefaultMusicNoteImage(Math.Max(picAlbum.Width, picAlbum.Height));
 
                     if (song.ID != _currentAlbumSongId)
                     {
@@ -485,8 +511,9 @@ namespace Melosoul
                         picAlbum.Image = _albumCover;
                     }
                 }
-                catch
+                catch (Exception ex)
                 {
+                    System.Diagnostics.Debug.WriteLine($"[Melosoul] {ex.GetType().Name}: {ex.Message}");
                 }
             });
         }
@@ -509,8 +536,9 @@ namespace Melosoul
                     return ResizeImageToFit(img, Math.Max(picAlbum.Width, picAlbum.Height));
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"[Melosoul] {ex.GetType().Name}: {ex.Message}");
                 return null;
             }
         }
@@ -535,8 +563,9 @@ namespace Melosoul
                     return ResizeImageToFit(img, maxSize);
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"[Melosoul] {ex.GetType().Name}: {ex.Message}");
                 return null;
             }
         }
@@ -554,6 +583,53 @@ namespace Melosoul
             return new Bitmap(image);
         }
 
+        private Bitmap CreateDefaultMusicNoteImage(int size)
+        {
+            int canvasSize = Math.Max(64, size);
+            var bmp = new Bitmap(canvasSize, canvasSize);
+            using (var g = Graphics.FromImage(bmp))
+            {
+                g.Clear(Color.FromArgb(42, 42, 42));
+                g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+
+                using (var staffPen = new Pen(Color.FromArgb(70, 70, 70), 2f))
+                {
+                    int left = canvasSize / 6;
+                    int right = canvasSize - canvasSize / 6;
+                    int mid = canvasSize / 2;
+                    g.DrawLine(staffPen, left, mid - 24, right, mid - 24);
+                    g.DrawLine(staffPen, left, mid - 10, right, mid - 10);
+                    g.DrawLine(staffPen, left, mid + 4, right, mid + 4);
+                }
+
+                using (var noteBrush = new SolidBrush(Color.FromArgb(214, 125, 162)))
+                using (var notePen = new Pen(Color.FromArgb(255, 175, 200), 3f))
+                {
+                    int stemX = (int)(canvasSize * 0.58);
+                    int stemTop = (int)(canvasSize * 0.22);
+                    int stemBottom = (int)(canvasSize * 0.62);
+                    g.DrawLine(notePen, stemX, stemTop, stemX, stemBottom);
+
+                    int headW = (int)(canvasSize * 0.22);
+                    int headH = (int)(canvasSize * 0.16);
+                    int headX = stemX - headW;
+                    int headY = stemBottom - headH / 2;
+                    g.FillEllipse(noteBrush, headX, headY, headW, headH);
+                    g.DrawEllipse(notePen, headX, headY, headW, headH);
+
+                    Point[] flag =
+                    {
+                        new Point(stemX, stemTop),
+                        new Point((int)(stemX + canvasSize * 0.18), (int)(stemTop + canvasSize * 0.04)),
+                        new Point(stemX, (int)(stemTop + canvasSize * 0.12))
+                    };
+                    g.FillPolygon(noteBrush, flag);
+                }
+            }
+
+            return bmp;
+        }
+
         private string NormalizeName(string name)
         {
             if (string.IsNullOrWhiteSpace(name))
@@ -567,38 +643,38 @@ namespace Melosoul
             return cleaned.ToString();
         }
 
-        private void Form1_Load(object sender, EventArgs e)
+        private void PlayerForm_Load(object sender, EventArgs e)
         {
             int color = unchecked((int)0xFFC8AFFF);
             DwmSetWindowAttribute(this.Handle, 35, ref color, sizeof(int));
 
             SetWindowTheme(progressBar.Handle, "", "");
 
-            listBoxPlaylist.EnableHeadersVisualStyles = false;
-            listBoxPlaylist.AllowUserToAddRows = false;
-            listBoxPlaylist.RowHeadersVisible = false;
-            listBoxPlaylist.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal;
-            listBoxPlaylist.GridColor = Color.FromArgb(45, 25, 38);
-            listBoxPlaylist.BackgroundColor = Color.FromArgb(18, 18, 18);
-            listBoxPlaylist.BorderStyle = BorderStyle.None;
-            listBoxPlaylist.MultiSelect = false;
-            listBoxPlaylist.ClearSelection();
+            dgvPlaylist.EnableHeadersVisualStyles = false;
+            dgvPlaylist.AllowUserToAddRows = false;
+            dgvPlaylist.RowHeadersVisible = false;
+            dgvPlaylist.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal;
+            dgvPlaylist.GridColor = Color.FromArgb(45, 25, 38);
+            dgvPlaylist.BackgroundColor = Color.FromArgb(18, 18, 18);
+            dgvPlaylist.BorderStyle = BorderStyle.None;
+            dgvPlaylist.MultiSelect = false;
+            dgvPlaylist.ClearSelection();
 
-            listBoxPlaylist.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(35, 15, 28);
-            listBoxPlaylist.ColumnHeadersDefaultCellStyle.ForeColor = Color.FromArgb(200, 130, 160);
-            listBoxPlaylist.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 8f, FontStyle.Bold);
-            listBoxPlaylist.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.None;
+            dgvPlaylist.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(35, 15, 28);
+            dgvPlaylist.ColumnHeadersDefaultCellStyle.ForeColor = Color.FromArgb(200, 130, 160);
+            dgvPlaylist.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 8f, FontStyle.Bold);
+            dgvPlaylist.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.None;
 
-            listBoxPlaylist.DefaultCellStyle.BackColor = Color.FromArgb(18, 18, 18);
-            listBoxPlaylist.DefaultCellStyle.ForeColor = Color.FromArgb(204, 204, 204);
-            listBoxPlaylist.DefaultCellStyle.SelectionBackColor = Color.FromArgb(80, 30, 60);
-            listBoxPlaylist.DefaultCellStyle.SelectionForeColor = Color.FromArgb(255, 255, 255);
-            listBoxPlaylist.DefaultCellStyle.Font = new Font("Segoe UI", 9f);
+            dgvPlaylist.DefaultCellStyle.BackColor = Color.FromArgb(18, 18, 18);
+            dgvPlaylist.DefaultCellStyle.ForeColor = Color.FromArgb(204, 204, 204);
+            dgvPlaylist.DefaultCellStyle.SelectionBackColor = Color.FromArgb(80, 30, 60);
+            dgvPlaylist.DefaultCellStyle.SelectionForeColor = Color.FromArgb(255, 255, 255);
+            dgvPlaylist.DefaultCellStyle.Font = new Font("Segoe UI", 9f);
 
-            listBoxPlaylist.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(22, 22, 22);
-            listBoxPlaylist.AlternatingRowsDefaultCellStyle.ForeColor = Color.FromArgb(204, 204, 204);
-            listBoxPlaylist.AlternatingRowsDefaultCellStyle.SelectionBackColor = Color.FromArgb(80, 30, 60);
-            listBoxPlaylist.AlternatingRowsDefaultCellStyle.SelectionForeColor = Color.FromArgb(255, 255, 255);
+            dgvPlaylist.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(22, 22, 22);
+            dgvPlaylist.AlternatingRowsDefaultCellStyle.ForeColor = Color.FromArgb(204, 204, 204);
+            dgvPlaylist.AlternatingRowsDefaultCellStyle.SelectionBackColor = Color.FromArgb(80, 30, 60);
+            dgvPlaylist.AlternatingRowsDefaultCellStyle.SelectionForeColor = Color.FromArgb(255, 255, 255);
 
             colNum.SortMode = DataGridViewColumnSortMode.NotSortable;
             colTitle.SortMode = DataGridViewColumnSortMode.NotSortable;
@@ -642,7 +718,10 @@ namespace Melosoul
                     _wmp.controls.stop();
                     Marshal.ReleaseComObject(_wmp);
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[Melosoul] {ex.GetType().Name}: {ex.Message}");
+                }
                 finally { _wmp = null; }
             }
             _playlist.Dispose();
@@ -665,11 +744,11 @@ namespace Melosoul
         {
             var list = _playlist.ToList();
             DisposePlaylistImages();
-            listBoxPlaylist.Rows.Clear();
+            dgvPlaylist.Rows.Clear();
             for (int i = 0; i < list.Count; i++)
             {
-                var rowIndex = listBoxPlaylist.Rows.Add(i + 1, list[i].Title, list[i].Artist, "--:--", null);
-                listBoxPlaylist.Rows[rowIndex].Tag = list[i].ID;
+                var rowIndex = dgvPlaylist.Rows.Add(i + 1, list[i].Title, list[i].Artist, "--:--", null);
+                dgvPlaylist.Rows[rowIndex].Tag = list[i].ID;
             }
             lblSongCount.Text = $"{_playlist.Count} bài hát";
             UpdatePlaylistDurationsAsync(list);
@@ -679,16 +758,16 @@ namespace Melosoul
 
         private void UpdatePlaylistSelection()
         {
-            if (listBoxPlaylist.IsDisposed) return;
+            if (dgvPlaylist.IsDisposed) return;
 
-            if (listBoxPlaylist.InvokeRequired)
+            if (dgvPlaylist.InvokeRequired)
             {
-                listBoxPlaylist.Invoke(new Action(UpdatePlaylistSelection));
+                dgvPlaylist.Invoke(new Action(UpdatePlaylistSelection));
                 return;
             }
 
-            listBoxPlaylist.ClearSelection();
-            listBoxPlaylist.CurrentCell = null;
+            dgvPlaylist.ClearSelection();
+            dgvPlaylist.CurrentCell = null;
 
             var current = _playlist.CurrentSong;
             if (current == null)
@@ -696,31 +775,34 @@ namespace Melosoul
 
             var list = _playlist.ToList();
             int index = list.FindIndex(s => s.ID == current.ID);
-            if (index < 0 || index >= listBoxPlaylist.Rows.Count)
+            if (index < 0 || index >= dgvPlaylist.Rows.Count)
                 return;
 
-            var row = listBoxPlaylist.Rows[index];
+            var row = dgvPlaylist.Rows[index];
             row.Selected = true;
-            if (listBoxPlaylist.Columns.Contains("colTitle"))
+            if (dgvPlaylist.Columns.Contains("colTitle"))
             {
-                listBoxPlaylist.CurrentCell = row.Cells["colTitle"];
+                dgvPlaylist.CurrentCell = row.Cells["colTitle"];
             }
-            else if (listBoxPlaylist.Columns.Count > 0)
+            else if (dgvPlaylist.Columns.Count > 0)
             {
-                listBoxPlaylist.CurrentCell = row.Cells[0];
+                dgvPlaylist.CurrentCell = row.Cells[0];
             }
 
             try
             {
-                listBoxPlaylist.FirstDisplayedScrollingRowIndex = index;
+                dgvPlaylist.FirstDisplayedScrollingRowIndex = index;
             }
-            catch { }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[Melosoul] {ex.GetType().Name}: {ex.Message}");
+            }
         }
 
         private void InitializePlaylistClickTimer()
         {
             _playlistClickTimer = new Timer();
-            _playlistClickTimer.Interval = Math.Min(SystemInformation.DoubleClickTime, 200);
+            _playlistClickTimer.Interval = Math.Min(SystemInformation.DoubleClickTime, 80);
             _playlistClickTimer.Tick += (sender, e) =>
             {
                 _playlistClickTimer.Stop();
@@ -730,7 +812,7 @@ namespace Melosoul
             };
         }
 
-        private void listBoxPlaylist_CellMouseClick(object sender, DataGridViewCellMouseEventArgs e)
+        private void dgvPlaylist_CellMouseClick(object sender, DataGridViewCellMouseEventArgs e)
         {
             if (e.RowIndex < 0 || e.ColumnIndex < 0) return;
             if (e.Button != MouseButtons.Left) return;
@@ -739,15 +821,15 @@ namespace Melosoul
             _playlistClickTimer.Start();
         }
 
-        private void listBoxPlaylist_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
+        private void dgvPlaylist_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
         {
             _playlistClickTimer.Stop();
             _pendingPlaylistClick = null;
 
             if (e.RowIndex < 0) return;
-            if (listBoxPlaylist.Rows.Count <= e.RowIndex) return;
+            if (dgvPlaylist.Rows.Count <= e.RowIndex) return;
 
-            var row = listBoxPlaylist.Rows[e.RowIndex];
+            var row = dgvPlaylist.Rows[e.RowIndex];
             var songId = row.Tag?.ToString();
             if (string.IsNullOrEmpty(songId)) return;
 
@@ -755,19 +837,26 @@ namespace Melosoul
             if (song == null) return;
 
             var oldTitle = song.Title;
-            using (var dialog = new RenameSongForm(oldTitle))
+            var oldArtist = song.Artist;
+            using (var dialog = new RenameSongDialog(oldTitle, oldArtist))
             {
                 if (dialog.ShowDialog(this) == DialogResult.OK)
                 {
                     string newTitle = dialog.SongTitle;
-                    if (!string.IsNullOrWhiteSpace(newTitle) && newTitle != oldTitle)
+                    string newArtist = dialog.SongArtist;
+                    bool titleChanged = !string.IsNullOrWhiteSpace(newTitle) && newTitle != oldTitle;
+                    bool artistChanged = newArtist != oldArtist;
+                    if (titleChanged || artistChanged)
                     {
                         song.Title = newTitle;
+                        song.Artist = newArtist;
                         row.Cells["colTitle"].Value = newTitle;
+                        row.Cells["colArtist"].Value = newArtist;
 
                         if (_playlist.CurrentSong != null && _playlist.CurrentSong.ID == song.ID)
                         {
                             lblCurrentSong.Text = newTitle;
+                            lblArtist.Text = newArtist;
                         }
                     }
                 }
@@ -776,11 +865,11 @@ namespace Melosoul
 
         private void HandlePlaylistSingleClick(DataGridViewCellMouseEventArgs e)
         {
-            if (listBoxPlaylist.IsDisposed) return;
+            if (dgvPlaylist.IsDisposed) return;
             if (e.RowIndex < 0 || e.ColumnIndex < 0) return;
 
-            if (e.RowIndex >= listBoxPlaylist.Rows.Count) return;
-            var row = listBoxPlaylist.Rows[e.RowIndex];
+            if (e.RowIndex >= dgvPlaylist.Rows.Count) return;
+            var row = dgvPlaylist.Rows[e.RowIndex];
             var songId = row.Tag?.ToString();
             if (string.IsNullOrEmpty(songId)) return;
             var song = _playlist.ToList().Find(s => s.ID == songId);
@@ -791,12 +880,12 @@ namespace Melosoul
             UpdatePlaylistSelection();
         }
 
-        private void listBoxPlaylist_CellEndEdit(object sender, DataGridViewCellEventArgs e)
+        private void dgvPlaylist_CellEndEdit(object sender, DataGridViewCellEventArgs e)
         {
             // Removed: using popup dialog instead of inline edit
         }
 
-        private void listBoxPlaylist_EditingControlShowing(object sender, DataGridViewEditingControlShowingEventArgs e)
+        private void dgvPlaylist_EditingControlShowing(object sender, DataGridViewEditingControlShowingEventArgs e)
         {
             // Removed: using popup dialog instead of inline edit
         }
@@ -812,11 +901,11 @@ namespace Melosoul
                     durationMap[song.ID] = duration;
                 }
 
-                if (listBoxPlaylist.IsDisposed) return;
+                if (dgvPlaylist.IsDisposed) return;
 
-                if (listBoxPlaylist.InvokeRequired)
+                if (dgvPlaylist.InvokeRequired)
                 {
-                    listBoxPlaylist.Invoke(new Action(() =>
+                    dgvPlaylist.Invoke(new Action(() =>
                     {
                         UpdateDurationsInUI(durationMap);
                     }));
@@ -830,9 +919,9 @@ namespace Melosoul
 
         private void UpdateDurationsInUI(System.Collections.Generic.Dictionary<string, string> durationMap)
         {
-            for (int i = 0; i < listBoxPlaylist.Rows.Count; i++)
+            for (int i = 0; i < dgvPlaylist.Rows.Count; i++)
             {
-                var row = listBoxPlaylist.Rows[i];
+                var row = dgvPlaylist.Rows[i];
                 string title = row.Cells["colTitle"].Value?.ToString();
                 if (string.IsNullOrEmpty(title)) continue;
 
@@ -846,9 +935,9 @@ namespace Melosoul
 
         private void UpdatePlaylistImagesAsync(System.Collections.Generic.List<Song> list)
         {
-            if (listBoxPlaylist == null ||
-                !listBoxPlaylist.Columns.Contains("colImage") ||
-                !listBoxPlaylist.Columns["colImage"].Visible)
+            if (dgvPlaylist == null ||
+                !dgvPlaylist.Columns.Contains("colImage") ||
+                !dgvPlaylist.Columns["colImage"].Visible)
             {
                 return;
             }
@@ -863,7 +952,7 @@ namespace Melosoul
                         imageMap[song.ID] = image;
                 }
 
-                if (listBoxPlaylist.IsDisposed)
+                if (dgvPlaylist.IsDisposed)
                 {
                     DisposeImages(imageMap.Values);
                     return;
@@ -875,14 +964,15 @@ namespace Melosoul
                     {
                         UpdateImagesInUI(imageMap);
                     }
-                    catch
+                    catch (Exception ex)
                     {
+                        System.Diagnostics.Debug.WriteLine($"[Melosoul] {ex.GetType().Name}: {ex.Message}");
                         DisposeImages(imageMap.Values);
                     }
                 };
 
-                if (listBoxPlaylist.InvokeRequired)
-                    listBoxPlaylist.Invoke(updateAction);
+                if (dgvPlaylist.InvokeRequired)
+                    dgvPlaylist.Invoke(updateAction);
                 else
                     updateAction();
             });
@@ -891,9 +981,9 @@ namespace Melosoul
         private void UpdateImagesInUI(System.Collections.Generic.Dictionary<string, Image> imageMap)
         {
             var usedImages = new System.Collections.Generic.HashSet<Image>();
-            for (int i = 0; i < listBoxPlaylist.Rows.Count; i++)
+            for (int i = 0; i < dgvPlaylist.Rows.Count; i++)
             {
-                var row = listBoxPlaylist.Rows[i];
+                var row = dgvPlaylist.Rows[i];
                 string songId = row.Tag?.ToString();
                 if (string.IsNullOrEmpty(songId)) continue;
 
@@ -931,8 +1021,9 @@ namespace Melosoul
                     return new Bitmap(img, 36, 36);
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"[Melosoul] {ex.GetType().Name}: {ex.Message}");
                 return null;
             }
         }
@@ -957,8 +1048,9 @@ namespace Melosoul
                     return new Bitmap(img, 36, 36);
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"[Melosoul] {ex.GetType().Name}: {ex.Message}");
                 return null;
             }
         }
@@ -1204,10 +1296,10 @@ namespace Melosoul
 
         private void DisposePlaylistImages()
         {
-            if (listBoxPlaylist == null || listBoxPlaylist.Rows.Count == 0 || !listBoxPlaylist.Columns.Contains("colImage"))
+            if (dgvPlaylist == null || dgvPlaylist.Rows.Count == 0 || !dgvPlaylist.Columns.Contains("colImage"))
                 return;
 
-            foreach (DataGridViewRow row in listBoxPlaylist.Rows)
+            foreach (DataGridViewRow row in dgvPlaylist.Rows)
             {
                 var image = row.Cells["colImage"].Value as Image;
                 image?.Dispose();
@@ -1230,7 +1322,7 @@ namespace Melosoul
 
         private void btnAdd_Click(object sender, EventArgs e)
         {
-            AddSongForm frm = new AddSongForm();
+            AddSongDialog frm = new AddSongDialog();
             if (frm.ShowDialog() == DialogResult.OK && frm.ResultSong != null)
             {
                 if (PlaylistContainsFile(frm.ResultSong.FilePath))
@@ -1248,13 +1340,13 @@ namespace Melosoul
 
         private void btnRemove_Click(object sender, EventArgs e)
         {
-            if (listBoxPlaylist.SelectedRows.Count == 0)
+            if (dgvPlaylist.SelectedRows.Count == 0)
             {
                 MessageBox.Show("Vui lòng chọn bài muốn xóa!", "Thông báo",
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
-            string title = listBoxPlaylist.SelectedRows[0].Cells["colTitle"].Value?.ToString();
+            string title = dgvPlaylist.SelectedRows[0].Cells["colTitle"].Value?.ToString();
             var song = _playlist.ToList().Find(s => s.Title == title);
             if (song == null) return;
 
@@ -1443,8 +1535,9 @@ namespace Melosoul
             {
                 System.IO.Directory.CreateDirectory(targetFolder);
             }
-            catch
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"[Melosoul] {ex.GetType().Name}: {ex.Message}");
                 result.ErrorCount = songs.Count;
                 return result;
             }
@@ -1478,8 +1571,9 @@ namespace Melosoul
                     System.IO.File.Copy(song.FilePath, targetPath, true);
                     result.CopiedCount++;
                 }
-                catch
+                catch (Exception ex)
                 {
+                    System.Diagnostics.Debug.WriteLine($"[Melosoul] {ex.GetType().Name}: {ex.Message}");
                     result.ErrorCount++;
                 }
             }
@@ -1660,11 +1754,11 @@ namespace Melosoul
             if (string.IsNullOrWhiteSpace(kw)) { RefreshPlaylistUI(); return; }
             var kq = _playlist.Find(kw);
             DisposePlaylistImages();
-            listBoxPlaylist.Rows.Clear();
+            dgvPlaylist.Rows.Clear();
             for (int i = 0; i < kq.Count; i++)
             {
-                var rowIndex = listBoxPlaylist.Rows.Add(i + 1, kq[i].Title, kq[i].Artist, "--:--", null);
-                listBoxPlaylist.Rows[rowIndex].Tag = kq[i].ID;
+                var rowIndex = dgvPlaylist.Rows.Add(i + 1, kq[i].Title, kq[i].Artist, "--:--", null);
+                dgvPlaylist.Rows[rowIndex].Tag = kq[i].ID;
             }
             UpdatePlaylistDurationsAsync(kq);
             UpdatePlaylistImagesAsync(kq);
@@ -1676,3 +1770,5 @@ namespace Melosoul
         }
     }
 }
+
+

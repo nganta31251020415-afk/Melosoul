@@ -71,8 +71,9 @@ namespace Melosoul.Services
                 _player.controls.stop();
                 System.Runtime.InteropServices.Marshal.ReleaseComObject(_player);
             }
-            catch
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"[Melosoul] {ex.GetType().Name}: {ex.Message}");
             }
         }
     }

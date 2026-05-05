@@ -51,35 +51,40 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AddSongForm.cs">
+    <PackageReference Include="TagLibSharp" Version="2.3.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Forms\AddSongDialog.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="AddSongForm.Designer.cs">
-      <DependentUpon>AddSongForm.cs</DependentUpon>
+    <Compile Include="Forms\AddSongDialog.Designer.cs">
+      <DependentUpon>AddSongDialog.cs</DependentUpon>
     </Compile>
-    <Compile Include="DoublyLinkedList.cs" />
+    <Compile Include="DataStructures\PlaylistLinkedList.cs" />
+    <Compile Include="Helpers\CustomVolumeSlider.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Helpers\FileIOHelper.cs" />
     <Compile Include="Models\Node.cs" />
     <Compile Include="Models\Song.cs" />
-    <Compile Include="Form1.cs">
+    <Compile Include="Forms\PlayerForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Form1.Designer.cs">
-      <DependentUpon>Form1.cs</DependentUpon>
+    <Compile Include="Forms\PlayerForm.Designer.cs">
+      <DependentUpon>PlayerForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="RenameSongForm.cs">
+    <Compile Include="Forms\RenameSongDialog.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="MainForm.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Services\AudioPlayer.cs" />
     <Compile Include="Services\PlaylistManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <EmbeddedResource Include="AddSongForm.resx">
-      <DependentUpon>AddSongForm.cs</DependentUpon>
+    <EmbeddedResource Include="Forms\AddSongDialog.resx">
+      <DependentUpon>AddSongDialog.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Form1.resx">
-      <DependentUpon>Form1.cs</DependentUpon>
+    <EmbeddedResource Include="Forms\PlayerForm.resx">
+      <DependentUpon>PlayerForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>

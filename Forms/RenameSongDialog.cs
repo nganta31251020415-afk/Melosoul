@@ -1,18 +1,21 @@
-using System;
+﻿using System;
 using System.Drawing;
 using System.Windows.Forms;
 
 namespace Melosoul
 {
-    public partial class RenameSongForm : Form
+    public partial class RenameSongDialog : Form
     {
         public string SongTitle { get; set; }
+        public string SongArtist { get; set; }
 
-        public RenameSongForm(string currentTitle)
+        public RenameSongDialog(string currentTitle, string currentArtist)
         {
             InitializeComponent();
             SongTitle = currentTitle;
+            SongArtist = currentArtist;
             txtTitle.Text = currentTitle;
+            txtArtist.Text = currentArtist;
             ApplyTheme();
         }
 
@@ -29,6 +32,11 @@ namespace Melosoul
             txtTitle.ForeColor = Color.FromArgb(220, 220, 220);
             txtTitle.Font = new Font("Segoe UI", 9f);
             txtTitle.BorderStyle = BorderStyle.FixedSingle;
+
+            txtArtist.BackColor = Color.FromArgb(50, 50, 50);
+            txtArtist.ForeColor = Color.FromArgb(220, 220, 220);
+            txtArtist.Font = new Font("Segoe UI", 9f);
+            txtArtist.BorderStyle = BorderStyle.FixedSingle;
 
             btnOK.BackColor = Color.FromArgb(80, 30, 60);
             btnOK.ForeColor = Color.FromArgb(255, 175, 200);
@@ -47,6 +55,8 @@ namespace Melosoul
         {
             this.lblTitle = new System.Windows.Forms.Label();
             this.txtTitle = new System.Windows.Forms.TextBox();
+            this.lblArtist = new System.Windows.Forms.Label();
+            this.txtArtist = new System.Windows.Forms.TextBox();
             this.btnOK = new System.Windows.Forms.Button();
             this.btnCancel = new System.Windows.Forms.Button();
             this.SuspendLayout();
@@ -66,38 +76,55 @@ namespace Melosoul
             this.txtTitle.TabIndex = 1;
             this.txtTitle.KeyDown += new System.Windows.Forms.KeyEventHandler(this.TxtTitle_KeyDown);
 
+            // lblArtist
+            this.lblArtist.AutoSize = true;
+            this.lblArtist.Location = new System.Drawing.Point(12, 82);
+            this.lblArtist.Name = "lblArtist";
+            this.lblArtist.Size = new System.Drawing.Size(56, 15);
+            this.lblArtist.TabIndex = 2;
+            this.lblArtist.Text = "Nghệ sĩ:";
+
+            // txtArtist
+            this.txtArtist.Location = new System.Drawing.Point(12, 107);
+            this.txtArtist.Name = "txtArtist";
+            this.txtArtist.Size = new System.Drawing.Size(360, 28);
+            this.txtArtist.TabIndex = 3;
+            this.txtArtist.KeyDown += new System.Windows.Forms.KeyEventHandler(this.TxtTitle_KeyDown);
+
             // btnOK
-            this.btnOK.Location = new System.Drawing.Point(200, 85);
+            this.btnOK.Location = new System.Drawing.Point(200, 147);
             this.btnOK.Name = "btnOK";
             this.btnOK.Size = new System.Drawing.Size(80, 32);
-            this.btnOK.TabIndex = 2;
+            this.btnOK.TabIndex = 4;
             this.btnOK.Text = "OK";
             this.btnOK.UseVisualStyleBackColor = true;
             this.btnOK.Click += new System.EventHandler(this.BtnOK_Click);
 
             // btnCancel
             this.btnCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.btnCancel.Location = new System.Drawing.Point(292, 85);
+            this.btnCancel.Location = new System.Drawing.Point(292, 147);
             this.btnCancel.Name = "btnCancel";
             this.btnCancel.Size = new System.Drawing.Size(80, 32);
-            this.btnCancel.TabIndex = 3;
+            this.btnCancel.TabIndex = 5;
             this.btnCancel.Text = "Hủy";
             this.btnCancel.UseVisualStyleBackColor = true;
 
-            // RenameSongForm
+            // RenameSongDialog
             this.AutoScaleDimensions = new System.Drawing.SizeF(7f, 15f);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.btnCancel;
-            this.ClientSize = new System.Drawing.Size(384, 130);
+            this.ClientSize = new System.Drawing.Size(384, 194);
             this.ControlBox = true;
             this.Controls.Add(this.lblTitle);
             this.Controls.Add(this.txtTitle);
+            this.Controls.Add(this.lblArtist);
+            this.Controls.Add(this.txtArtist);
             this.Controls.Add(this.btnOK);
             this.Controls.Add(this.btnCancel);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
-            this.Name = "RenameSongForm";
+            this.Name = "RenameSongDialog";
             this.ShowIcon = false;
             this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
@@ -124,6 +151,7 @@ namespace Melosoul
         private void BtnOK_Click(object sender, EventArgs e)
         {
             SongTitle = txtTitle.Text.Trim();
+            SongArtist = txtArtist.Text.Trim();
             if (string.IsNullOrWhiteSpace(SongTitle))
             {
                 MessageBox.Show("Tên bài hát không được để trống.", "Lỗi", 
@@ -137,7 +165,11 @@ namespace Melosoul
 
         private System.Windows.Forms.Label lblTitle;
         private System.Windows.Forms.TextBox txtTitle;
+        private System.Windows.Forms.Label lblArtist;
+        private System.Windows.Forms.TextBox txtArtist;
         private System.Windows.Forms.Button btnOK;
         private System.Windows.Forms.Button btnCancel;
     }
 }
+
+
