@@ -245,6 +245,22 @@ public class PlaylistLinkedList : IDisposable
         finally { _rwLock.ExitWriteLock(); }
     }
 
+    public bool UpdateSongMetadata(string id, string title, string artist)
+    {
+        _rwLock.EnterWriteLock();
+        try
+        {
+            if (!_idIndex.TryGetValue(id, out Node node)) return false;
+
+            RemoveFromIndex(node);
+            node.Data.Title = title ?? string.Empty;
+            node.Data.Artist = artist ?? string.Empty;
+            IndexSong(node);
+            return true;
+        }
+        finally { _rwLock.ExitWriteLock(); }
+    }
+
 
     // Next/Prev thay đổi trạng thái _current nên dùng Write Lock
     public Song Next()

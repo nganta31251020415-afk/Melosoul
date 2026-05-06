@@ -28,6 +28,9 @@ namespace Melosoul
             lblTitle.ForeColor = Color.FromArgb(200, 130, 160);
             lblTitle.Font = new Font("Segoe UI", 10f, FontStyle.Bold);
 
+            lblArtist.ForeColor = Color.FromArgb(200, 130, 160);
+            lblArtist.Font = new Font("Segoe UI", 10f, FontStyle.Bold);
+
             txtTitle.BackColor = Color.FromArgb(50, 50, 50);
             txtTitle.ForeColor = Color.FromArgb(220, 220, 220);
             txtTitle.Font = new Font("Segoe UI", 9f);

@@ -16,23 +16,26 @@ namespace Melosoul
 
         private void btnBrowse_Click(object sender, EventArgs e)
         {
-            OpenFileDialog dlg = new OpenFileDialog();
-            dlg.Filter = "MP3 files|*.mp3|All files|*.*";
-            dlg.Title = "Chọn file nhạc";
-            if (dlg.ShowDialog() == DialogResult.OK)
+            using (OpenFileDialog dlg = new OpenFileDialog())
             {
-                txtPath.Text = dlg.FileName;
-                LoadMetadataFromFile(dlg.FileName);
+                dlg.Filter = "MP3 files|*.mp3|All files|*.*";
+                dlg.Title = "Chọn file nhạc";
+                if (dlg.ShowDialog() == DialogResult.OK)
+                {
+                    txtPath.Text = dlg.FileName;
+                    LoadMetadataFromFile(dlg.FileName);
+                }
             }
-            dlg.Dispose();
         }
 
         private void LoadMetadataFromFile(string filePath)
         {
+            WindowsMediaPlayer player = null;
+            IWMPMedia media = null;
             try
             {
-                var player = new WindowsMediaPlayer();
-                var media = player.newMedia(filePath);
+                player = new WindowsMediaPlayer();
+                media = player.newMedia(filePath);
                 string title = media.getItemInfo("Title");
                 string artist = media.getItemInfo("Author");
                 if (string.IsNullOrWhiteSpace(artist))
@@ -47,15 +50,19 @@ namespace Melosoul
 
                 if (string.IsNullOrWhiteSpace(txtArtist.Text) && !string.IsNullOrWhiteSpace(artist))
                     txtArtist.Text = artist.Trim();
-
-                Marshal.ReleaseComObject(media);
-                Marshal.ReleaseComObject(player);
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[Melosoul] {ex.GetType().Name}: {ex.Message}");
                 if (string.IsNullOrWhiteSpace(txtTitle.Text))
                     txtTitle.Text = System.IO.Path.GetFileNameWithoutExtension(filePath);
+            }
+            finally
+            {
+                if (media != null)
+                    Marshal.ReleaseComObject(media);
+                if (player != null)
+                    Marshal.ReleaseComObject(player);
             }
         }
 

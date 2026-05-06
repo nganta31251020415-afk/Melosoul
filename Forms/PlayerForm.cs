@@ -3,6 +3,8 @@ using System.Drawing;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Melosoul.Helpers;
+using Melosoul.Services;
 using WMPLib;
 using System.Runtime.InteropServices;
 namespace Melosoul
@@ -17,12 +19,12 @@ namespace Melosoul
         private Timer _playbackTimer;
         private Timer _playlistClickTimer;
         private DataGridViewCellMouseEventArgs _pendingPlaylistClick;
+        private CustomPlaylistScrollBar _playlistScrollBar;
+        private bool _syncingPlaylistScrollBar;
+        private readonly AlbumArtService _albumArtService = new AlbumArtService();
+        private readonly AutoSaveService _autoSaveService = new AutoSaveService();
         private int _autoNextQueued;
         private string _currentAlbumSongId;
-        private readonly string _autoSavePath =
-    System.IO.Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-        "Melosoul", "autosave.txt");
 
         [System.Runtime.InteropServices.DllImport("uxtheme.dll",
             CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
@@ -38,6 +40,8 @@ namespace Melosoul
             InitWMP();
             InitializePlaybackTimer();
             InitializePlaylistClickTimer();
+            InitializePlaylistDragDrop();
+            InitializePlaylistScrollBar();
         }
 
         private void InitWMP()
@@ -54,6 +58,30 @@ namespace Melosoul
         {
             _playbackTimer = new Timer { Interval = 500 };
             _playbackTimer.Tick += PlaybackTimer_Tick;
+        }
+
+        private void InitializePlaylistDragDrop()
+        {
+            dgvPlaylist.AllowDrop = true;
+            dgvPlaylist.DragEnter += dgvPlaylist_DragEnter;
+            dgvPlaylist.DragOver += dgvPlaylist_DragEnter;
+            dgvPlaylist.DragDrop += dgvPlaylist_DragDrop;
+        }
+
+        private void InitializePlaylistScrollBar()
+        {
+            _playlistScrollBar = new CustomPlaylistScrollBar();
+            _playlistScrollBar.ValueChanged += PlaylistScrollBar_ValueChanged;
+            Controls.Add(_playlistScrollBar);
+            _playlistScrollBar.BringToFront();
+
+            dgvPlaylist.Scroll += dgvPlaylist_Scroll;
+            dgvPlaylist.MouseWheel += dgvPlaylist_MouseWheel;
+            dgvPlaylist.RowsAdded += dgvPlaylist_RowsChanged;
+            dgvPlaylist.RowsRemoved += dgvPlaylist_RowsChanged;
+            dgvPlaylist.SizeChanged += dgvPlaylist_SizeChanged;
+            dgvPlaylist.ColumnWidthChanged += dgvPlaylist_ColumnWidthChanged;
+            Resize += PlayerForm_Resize;
         }
 
         private void PlaybackTimer_Tick(object sender, EventArgs e)
@@ -204,6 +232,13 @@ namespace Melosoul
         private void AutoNext()
         {
             System.Threading.Interlocked.Exchange(ref _autoNextQueued, 0);
+
+            if (chkRepeatOne.Checked && _playlist.CurrentSong != null)
+            {
+                Song currentSong = _playlist.CurrentSong;
+                if (IsValidFile(currentSong)) { PlaySong(currentSong); RefreshPlaylistUI(); return; }
+            }
+
             int maxSkip = _playlist.Count;
             int skipped = 0;
             while (true)
@@ -215,45 +250,6 @@ namespace Melosoul
                 if (skipped >= maxSkip) { lblCurrentSong.Text = "Không có file hợp lệ."; return; }
             }
         }
-
-        private void AutoSave()
-        {
-            try
-            {
-                System.IO.Directory.CreateDirectory(
-                    System.IO.Path.GetDirectoryName(_autoSavePath));
-                var lines = new System.Collections.Generic.List<string>();
-                foreach (var s in _playlist.ToList())
-                    lines.Add($"{s.Title}|{s.Artist}|{s.FilePath}");
-                System.IO.File.WriteAllLines(_autoSavePath, lines);
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[Melosoul] {ex.GetType().Name}: {ex.Message}");
-            }
-        }
-
-        private void AutoLoad()
-        {
-            try
-            {
-                if (!System.IO.File.Exists(_autoSavePath)) return;
-                foreach (var line in System.IO.File.ReadAllLines(_autoSavePath))
-                {
-                    var p = line.Split('|');
-                    if (p.Length < 3) continue;
-                    _playlist.AddLast(new Song(
-                        Guid.NewGuid().ToString(),
-                        p[0].Trim(), p[1].Trim(), p[2].Trim()));
-                }
-                RefreshPlaylistUI();
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[Melosoul] {ex.GetType().Name}: {ex.Message}");
-            }
-        }
-
 
         private void PlaySong(Song song)
         {
@@ -338,6 +334,19 @@ namespace Melosoul
                 string.Equals(s.FilePath, filePath, StringComparison.OrdinalIgnoreCase));
         }
 
+        private Song FindSongById(string songId)
+        {
+            if (string.IsNullOrWhiteSpace(songId))
+                return null;
+
+            return _playlist.ToList().Find(s => s.ID == songId);
+        }
+
+        private Song GetSongFromRow(DataGridViewRow row)
+        {
+            return FindSongById(row?.Tag?.ToString());
+        }
+
         private Song CreateSongFromFile(string filePath)
         {
             WindowsMediaPlayer player = null;
@@ -384,80 +393,6 @@ namespace Melosoul
             }
         }
 
-        private string FindCoverImagePath(Song song)
-        {
-            if (song == null || string.IsNullOrWhiteSpace(song.FilePath))
-                return null;
-
-            string dir = System.IO.Path.GetDirectoryName(song.FilePath);
-            if (string.IsNullOrWhiteSpace(dir) || !System.IO.Directory.Exists(dir))
-                return null;
-
-            string fileNameNoExt = System.IO.Path.GetFileNameWithoutExtension(song.FilePath);
-            string[] exactCandidates = new[]
-            {
-                $"{fileNameNoExt}.jpg",
-                $"{fileNameNoExt}.jpeg",
-                $"{fileNameNoExt}.png",
-                $"{fileNameNoExt}.bmp",
-                $"{fileNameNoExt}.gif"
-            };
-
-            foreach (var candidate in exactCandidates)
-            {
-                string path = System.IO.Path.Combine(dir, candidate);
-                if (System.IO.File.Exists(path))
-                    return path;
-            }
-
-            string normalizedTarget = NormalizeName(fileNameNoExt);
-            var extensions = new[] { ".jpg", ".jpeg", ".png", ".bmp", ".gif" };
-            foreach (var file in System.IO.Directory.EnumerateFiles(dir))
-            {
-                string ext = System.IO.Path.GetExtension(file).ToLowerInvariant();
-                if (!extensions.Contains(ext))
-                    continue;
-
-                string name = System.IO.Path.GetFileNameWithoutExtension(file);
-                string normalizedName = NormalizeName(name);
-                if (normalizedName.Contains(normalizedTarget) || normalizedTarget.Contains(normalizedName))
-                    return file;
-            }
-
-            string[] fallbackCandidates = new[]
-            {
-                "cover.jpg",
-                "cover.jpeg",
-                "cover.png",
-                "cover.bmp",
-                "cover.gif",
-                "folder.jpg",
-                "folder.jpeg",
-                "folder.png",
-                "folder.bmp",
-                "folder.gif",
-                "album.jpg",
-                "album.jpeg",
-                "album.png",
-                "album.bmp",
-                "album.gif",
-                "front.jpg",
-                "front.jpeg",
-                "front.png",
-                "front.bmp",
-                "front.gif"
-            };
-
-            foreach (var candidate in fallbackCandidates)
-            {
-                string path = System.IO.Path.Combine(dir, candidate);
-                if (System.IO.File.Exists(path))
-                    return path;
-            }
-
-            return null;
-        }
-
         private void UpdateAlbumCover(Song song)
         {
             if (picAlbum == null)
@@ -470,6 +405,7 @@ namespace Melosoul
                 return;
 
             _currentAlbumSongId = song.ID;
+            int coverSize = Math.Max(picAlbum.Width, picAlbum.Height);
 
             Task.Run(() =>
             {
@@ -478,11 +414,11 @@ namespace Melosoul
                     if (song.ID != _currentAlbumSongId)
                         return;
 
-                    Bitmap loadedImage = CreateAlbumCoverImage(song);
+                    Bitmap loadedImage = _albumArtService.CreateAlbumCoverImage(song, coverSize);
                     if (loadedImage == null)
-                        loadedImage = CreateDefaultMusicNoteImage(Math.Max(picAlbum.Width, picAlbum.Height));
+                        loadedImage = _albumArtService.CreateDefaultMusicNoteImage(coverSize);
 
-                    if (song.ID != _currentAlbumSongId)
+                    if (song.ID != _currentAlbumSongId || IsDisposed || picAlbum.IsDisposed)
                     {
                         loadedImage.Dispose();
                         return;
@@ -490,9 +426,9 @@ namespace Melosoul
 
                     if (picAlbum.InvokeRequired)
                     {
-                        picAlbum.Invoke(new Action(() =>
+                        picAlbum.BeginInvoke(new Action(() =>
                         {
-                            if (song.ID == _currentAlbumSongId)
+                            if (!IsDisposed && !picAlbum.IsDisposed && song.ID == _currentAlbumSongId)
                             {
                                 DisposeAlbumCover();
                                 _albumCover = loadedImage;
@@ -518,131 +454,6 @@ namespace Melosoul
             });
         }
 
-        private Bitmap CreateAlbumCoverImage(Song song)
-        {
-            Bitmap embeddedImage = CreateEmbeddedMp3Image(song?.FilePath, Math.Max(picAlbum.Width, picAlbum.Height));
-            if (embeddedImage != null)
-                return embeddedImage;
-
-            string path = FindSongSpecificCoverImagePath(song);
-            if (path == null)
-                return null;
-
-            try
-            {
-                using (var fs = System.IO.File.OpenRead(path))
-                using (var img = Image.FromStream(fs))
-                {
-                    return ResizeImageToFit(img, Math.Max(picAlbum.Width, picAlbum.Height));
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[Melosoul] {ex.GetType().Name}: {ex.Message}");
-                return null;
-            }
-        }
-
-        private Bitmap CreateEmbeddedMp3Image(string filePath, int maxSize)
-        {
-            if (string.IsNullOrWhiteSpace(filePath) || !System.IO.File.Exists(filePath))
-                return null;
-
-            if (!string.Equals(System.IO.Path.GetExtension(filePath), ".mp3", StringComparison.OrdinalIgnoreCase))
-                return null;
-
-            try
-            {
-                byte[] imageBytes = ReadEmbeddedMp3ImageBytes(filePath);
-                if (imageBytes == null || imageBytes.Length == 0)
-                    return null;
-
-                using (var ms = new System.IO.MemoryStream(imageBytes))
-                using (var img = Image.FromStream(ms))
-                {
-                    return ResizeImageToFit(img, maxSize);
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[Melosoul] {ex.GetType().Name}: {ex.Message}");
-                return null;
-            }
-        }
-
-        private Bitmap ResizeImageToFit(Image image, int maxSize)
-        {
-            if (image.Width > maxSize || image.Height > maxSize)
-            {
-                float ratio = Math.Min((float)maxSize / image.Width, (float)maxSize / image.Height);
-                int newWidth = Math.Max(1, (int)(image.Width * ratio));
-                int newHeight = Math.Max(1, (int)(image.Height * ratio));
-                return new Bitmap(image, newWidth, newHeight);
-            }
-
-            return new Bitmap(image);
-        }
-
-        private Bitmap CreateDefaultMusicNoteImage(int size)
-        {
-            int canvasSize = Math.Max(64, size);
-            var bmp = new Bitmap(canvasSize, canvasSize);
-            using (var g = Graphics.FromImage(bmp))
-            {
-                g.Clear(Color.FromArgb(42, 42, 42));
-                g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-
-                using (var staffPen = new Pen(Color.FromArgb(70, 70, 70), 2f))
-                {
-                    int left = canvasSize / 6;
-                    int right = canvasSize - canvasSize / 6;
-                    int mid = canvasSize / 2;
-                    g.DrawLine(staffPen, left, mid - 24, right, mid - 24);
-                    g.DrawLine(staffPen, left, mid - 10, right, mid - 10);
-                    g.DrawLine(staffPen, left, mid + 4, right, mid + 4);
-                }
-
-                using (var noteBrush = new SolidBrush(Color.FromArgb(214, 125, 162)))
-                using (var notePen = new Pen(Color.FromArgb(255, 175, 200), 3f))
-                {
-                    int stemX = (int)(canvasSize * 0.58);
-                    int stemTop = (int)(canvasSize * 0.22);
-                    int stemBottom = (int)(canvasSize * 0.62);
-                    g.DrawLine(notePen, stemX, stemTop, stemX, stemBottom);
-
-                    int headW = (int)(canvasSize * 0.22);
-                    int headH = (int)(canvasSize * 0.16);
-                    int headX = stemX - headW;
-                    int headY = stemBottom - headH / 2;
-                    g.FillEllipse(noteBrush, headX, headY, headW, headH);
-                    g.DrawEllipse(notePen, headX, headY, headW, headH);
-
-                    Point[] flag =
-                    {
-                        new Point(stemX, stemTop),
-                        new Point((int)(stemX + canvasSize * 0.18), (int)(stemTop + canvasSize * 0.04)),
-                        new Point(stemX, (int)(stemTop + canvasSize * 0.12))
-                    };
-                    g.FillPolygon(noteBrush, flag);
-                }
-            }
-
-            return bmp;
-        }
-
-        private string NormalizeName(string name)
-        {
-            if (string.IsNullOrWhiteSpace(name))
-                return string.Empty;
-            var cleaned = new System.Text.StringBuilder();
-            foreach (char c in name.ToLowerInvariant())
-            {
-                if (char.IsLetterOrDigit(c))
-                    cleaned.Append(c);
-            }
-            return cleaned.ToString();
-        }
-
         private void PlayerForm_Load(object sender, EventArgs e)
         {
             int color = unchecked((int)0xFFC8AFFF);
@@ -658,6 +469,7 @@ namespace Melosoul
             dgvPlaylist.BackgroundColor = Color.FromArgb(18, 18, 18);
             dgvPlaylist.BorderStyle = BorderStyle.None;
             dgvPlaylist.MultiSelect = false;
+            dgvPlaylist.ScrollBars = ScrollBars.None;
             dgvPlaylist.ClearSelection();
 
             dgvPlaylist.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(35, 15, 28);
@@ -684,7 +496,10 @@ namespace Melosoul
             colImage.Visible = false;
             ConfigureStatusSeparators();
 
-            AutoLoad();
+            foreach (var song in _autoSaveService.Load())
+                _playlist.AddLast(song);
+
+            RefreshPlaylistUI();
         }
 
         private void ConfigureStatusSeparators()
@@ -708,7 +523,10 @@ namespace Melosoul
 
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
-            AutoSave();
+            _autoSaveService.Save(_playlist);
+            UnwirePlaylistScrollBar();
+            _playbackTimer?.Stop();
+            _playlistClickTimer?.Stop();
             if (_wmp != null)
             {
                 try
@@ -726,14 +544,51 @@ namespace Melosoul
             }
             _playlist.Dispose();
             DisposePlaylistImages();
+            DisposeAlbumCover();
+            _playbackTimer?.Dispose();
+            _playlistClickTimer?.Dispose();
+            _playlistScrollBar?.Dispose();
             base.OnFormClosing(e);
+        }
+
+        private void UnwirePlaylistScrollBar()
+        {
+            if (_playlistScrollBar != null)
+                _playlistScrollBar.ValueChanged -= PlaylistScrollBar_ValueChanged;
+
+            if (dgvPlaylist != null)
+            {
+                dgvPlaylist.Scroll -= dgvPlaylist_Scroll;
+                dgvPlaylist.MouseWheel -= dgvPlaylist_MouseWheel;
+                dgvPlaylist.RowsAdded -= dgvPlaylist_RowsChanged;
+                dgvPlaylist.RowsRemoved -= dgvPlaylist_RowsChanged;
+                dgvPlaylist.SizeChanged -= dgvPlaylist_SizeChanged;
+                dgvPlaylist.ColumnWidthChanged -= dgvPlaylist_ColumnWidthChanged;
+            }
+
+            Resize -= PlayerForm_Resize;
         }
 
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
-            if (keyData == Keys.Space && !(ActiveControl is TextBox))
+            if (ActiveControl is TextBox)
+                return base.ProcessCmdKey(ref msg, keyData);
+
+            if (keyData == Keys.Space)
             {
                 TogglePlayPause();
+                return true;
+            }
+
+            if (keyData == Keys.Right || keyData == (Keys.Control | Keys.Right))
+            {
+                btnNext_Click(this, EventArgs.Empty);
+                return true;
+            }
+
+            if (keyData == Keys.Left || keyData == (Keys.Control | Keys.Left))
+            {
+                btnPrev_Click(this, EventArgs.Empty);
                 return true;
             }
 
@@ -751,6 +606,7 @@ namespace Melosoul
                 dgvPlaylist.Rows[rowIndex].Tag = list[i].ID;
             }
             lblSongCount.Text = $"{_playlist.Count} bài hát";
+            UpdatePlaylistScrollBar();
             UpdatePlaylistDurationsAsync(list);
             UpdatePlaylistImagesAsync(list);
             UpdatePlaylistSelection();
@@ -771,12 +627,18 @@ namespace Melosoul
 
             var current = _playlist.CurrentSong;
             if (current == null)
+            {
+                UpdatePlaylistScrollBar();
                 return;
+            }
 
             var list = _playlist.ToList();
             int index = list.FindIndex(s => s.ID == current.ID);
             if (index < 0 || index >= dgvPlaylist.Rows.Count)
+            {
+                UpdatePlaylistScrollBar();
                 return;
+            }
 
             var row = dgvPlaylist.Rows[index];
             row.Selected = true;
@@ -796,6 +658,149 @@ namespace Melosoul
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[Melosoul] {ex.GetType().Name}: {ex.Message}");
+            }
+
+            UpdatePlaylistScrollBar();
+        }
+
+        private void PlaylistScrollBar_ValueChanged(object sender, EventArgs e)
+        {
+            if (_syncingPlaylistScrollBar || dgvPlaylist.Rows.Count == 0)
+                return;
+
+            int targetIndex = Math.Max(0, Math.Min(_playlistScrollBar.Value, dgvPlaylist.Rows.Count - 1));
+            try
+            {
+                _syncingPlaylistScrollBar = true;
+                dgvPlaylist.FirstDisplayedScrollingRowIndex = targetIndex;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[Melosoul] {ex.GetType().Name}: {ex.Message}");
+            }
+            finally
+            {
+                _syncingPlaylistScrollBar = false;
+            }
+
+            UpdatePlaylistScrollBar();
+        }
+
+        private void dgvPlaylist_Scroll(object sender, ScrollEventArgs e)
+        {
+            UpdatePlaylistScrollBar();
+        }
+
+        private void dgvPlaylist_MouseWheel(object sender, MouseEventArgs e)
+        {
+            ScrollPlaylistByRows(-Math.Sign(e.Delta) * 3);
+        }
+
+        private void dgvPlaylist_RowsChanged(object sender, EventArgs e)
+        {
+            UpdatePlaylistScrollBar();
+        }
+
+        private void dgvPlaylist_SizeChanged(object sender, EventArgs e)
+        {
+            UpdatePlaylistScrollBar();
+        }
+
+        private void dgvPlaylist_ColumnWidthChanged(object sender, DataGridViewColumnEventArgs e)
+        {
+            UpdatePlaylistScrollBar();
+        }
+
+        private void PlayerForm_Resize(object sender, EventArgs e)
+        {
+            UpdatePlaylistScrollBar();
+        }
+
+        private void ScrollPlaylistByRows(int rowDelta)
+        {
+            if (dgvPlaylist.Rows.Count == 0)
+                return;
+
+            int firstRowIndex = GetFirstDisplayedPlaylistRowIndex();
+            int visibleRows = GetVisiblePlaylistRowCount();
+            int maxFirstRowIndex = Math.Max(0, dgvPlaylist.Rows.Count - visibleRows);
+            int targetIndex = Math.Max(0, Math.Min(maxFirstRowIndex, firstRowIndex + rowDelta));
+
+            try
+            {
+                dgvPlaylist.FirstDisplayedScrollingRowIndex = targetIndex;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[Melosoul] {ex.GetType().Name}: {ex.Message}");
+            }
+
+            UpdatePlaylistScrollBar();
+        }
+
+        private void UpdatePlaylistScrollBar()
+        {
+            if (_playlistScrollBar == null || dgvPlaylist == null || dgvPlaylist.IsDisposed)
+                return;
+
+            int visibleRows = GetVisiblePlaylistRowCount();
+            int maxFirstRowIndex = Math.Max(0, dgvPlaylist.Rows.Count - visibleRows);
+            int firstRowIndex = Math.Min(GetFirstDisplayedPlaylistRowIndex(), maxFirstRowIndex);
+            bool shouldShow = dgvPlaylist.Rows.Count > visibleRows;
+
+            _syncingPlaylistScrollBar = true;
+            _playlistScrollBar.SetScrollInfo(0, maxFirstRowIndex, firstRowIndex, visibleRows);
+            _playlistScrollBar.Visible = shouldShow;
+            _syncingPlaylistScrollBar = false;
+
+            UpdatePlaylistScrollBarBounds();
+        }
+
+        private void UpdatePlaylistScrollBarBounds()
+        {
+            if (_playlistScrollBar == null)
+                return;
+
+            const int width = 12;
+            const int marginRight = 4;
+            int top = dgvPlaylist.Top + dgvPlaylist.ColumnHeadersHeight + 4;
+            int bottom = dgvPlaylist.Bottom - 4;
+            _playlistScrollBar.Bounds = new Rectangle(
+                dgvPlaylist.Right - width - marginRight,
+                top,
+                width,
+                Math.Max(1, bottom - top));
+            _playlistScrollBar.BringToFront();
+        }
+
+        private int GetVisiblePlaylistRowCount()
+        {
+            if (dgvPlaylist.Rows.Count == 0)
+                return 1;
+
+            try
+            {
+                int displayed = dgvPlaylist.DisplayedRowCount(false);
+                if (displayed > 0)
+                    return displayed;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[Melosoul] {ex.GetType().Name}: {ex.Message}");
+            }
+
+            return Math.Max(1, (dgvPlaylist.ClientSize.Height - dgvPlaylist.ColumnHeadersHeight) / Math.Max(1, dgvPlaylist.RowTemplate.Height));
+        }
+
+        private int GetFirstDisplayedPlaylistRowIndex()
+        {
+            try
+            {
+                return dgvPlaylist.Rows.Count == 0 ? 0 : dgvPlaylist.FirstDisplayedScrollingRowIndex;
+            }
+            catch
+            {
+                return 0;
             }
         }
 
@@ -830,10 +835,7 @@ namespace Melosoul
             if (dgvPlaylist.Rows.Count <= e.RowIndex) return;
 
             var row = dgvPlaylist.Rows[e.RowIndex];
-            var songId = row.Tag?.ToString();
-            if (string.IsNullOrEmpty(songId)) return;
-
-            var song = _playlist.ToList().Find(s => s.ID == songId);
+            var song = GetSongFromRow(row);
             if (song == null) return;
 
             var oldTitle = song.Title;
@@ -848,8 +850,9 @@ namespace Melosoul
                     bool artistChanged = newArtist != oldArtist;
                     if (titleChanged || artistChanged)
                     {
-                        song.Title = newTitle;
-                        song.Artist = newArtist;
+                        if (!_playlist.UpdateSongMetadata(song.ID, newTitle, newArtist))
+                            return;
+
                         row.Cells["colTitle"].Value = newTitle;
                         row.Cells["colArtist"].Value = newArtist;
 
@@ -870,9 +873,7 @@ namespace Melosoul
 
             if (e.RowIndex >= dgvPlaylist.Rows.Count) return;
             var row = dgvPlaylist.Rows[e.RowIndex];
-            var songId = row.Tag?.ToString();
-            if (string.IsNullOrEmpty(songId)) return;
-            var song = _playlist.ToList().Find(s => s.ID == songId);
+            var song = GetSongFromRow(row);
             if (song == null) return;
 
             _playlist.MoveTo(song.ID);
@@ -922,10 +923,7 @@ namespace Melosoul
             for (int i = 0; i < dgvPlaylist.Rows.Count; i++)
             {
                 var row = dgvPlaylist.Rows[i];
-                string title = row.Cells["colTitle"].Value?.ToString();
-                if (string.IsNullOrEmpty(title)) continue;
-
-                var song = _playlist.ToList().Find(s => s.Title == title);
+                var song = GetSongFromRow(row);
                 if (song != null && durationMap.TryGetValue(song.ID, out string duration))
                 {
                     row.Cells["colDuration"].Value = duration;
@@ -947,7 +945,7 @@ namespace Melosoul
                 var imageMap = new System.Collections.Generic.Dictionary<string, Image>();
                 foreach (var song in list)
                 {
-                    var image = CreatePlaylistThumbnail(song);
+                    var image = _albumArtService.CreatePlaylistThumbnail(song);
                     if (image != null)
                         imageMap[song.ID] = image;
                 }
@@ -987,13 +985,17 @@ namespace Melosoul
                 string songId = row.Tag?.ToString();
                 if (string.IsNullOrEmpty(songId)) continue;
 
-                if (imageMap.TryGetValue(songId, out Image image))
+                if (!imageMap.TryGetValue(songId, out Image image))
+                    continue;
+
+                if (!ReferenceEquals(row.Cells["colImage"].Value, image))
                 {
                     var oldImage = row.Cells["colImage"].Value as Image;
                     row.Cells["colImage"].Value = image;
-                    usedImages.Add(image);
                     oldImage?.Dispose();
                 }
+
+                usedImages.Add(image);
             }
 
             foreach (var pair in imageMap)
@@ -1001,297 +1003,6 @@ namespace Melosoul
                 if (!usedImages.Contains(pair.Value))
                     pair.Value.Dispose();
             }
-        }
-
-        private Image CreatePlaylistThumbnail(Song song)
-        {
-            var embeddedImage = CreateEmbeddedMp3Thumbnail(song?.FilePath);
-            if (embeddedImage != null)
-                return embeddedImage;
-
-            string path = FindSongSpecificCoverImagePath(song);
-            if (path == null)
-                return null;
-
-            try
-            {
-                using (var fs = System.IO.File.OpenRead(path))
-                using (var img = Image.FromStream(fs))
-                {
-                    return new Bitmap(img, 36, 36);
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[Melosoul] {ex.GetType().Name}: {ex.Message}");
-                return null;
-            }
-        }
-
-        private Image CreateEmbeddedMp3Thumbnail(string filePath)
-        {
-            if (string.IsNullOrWhiteSpace(filePath) || !System.IO.File.Exists(filePath))
-                return null;
-
-            if (!string.Equals(System.IO.Path.GetExtension(filePath), ".mp3", StringComparison.OrdinalIgnoreCase))
-                return null;
-
-            try
-            {
-                byte[] imageBytes = ReadEmbeddedMp3ImageBytes(filePath);
-                if (imageBytes == null || imageBytes.Length == 0)
-                    return null;
-
-                using (var ms = new System.IO.MemoryStream(imageBytes))
-                using (var img = Image.FromStream(ms))
-                {
-                    return new Bitmap(img, 36, 36);
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[Melosoul] {ex.GetType().Name}: {ex.Message}");
-                return null;
-            }
-        }
-
-        private byte[] ReadEmbeddedMp3ImageBytes(string filePath)
-        {
-            using (var fs = System.IO.File.OpenRead(filePath))
-            {
-                if (fs.Length < 10)
-                    return null;
-
-                byte[] header = new byte[10];
-                if (fs.Read(header, 0, header.Length) != header.Length)
-                    return null;
-
-                if (header[0] != 'I' || header[1] != 'D' || header[2] != '3')
-                    return null;
-
-                int majorVersion = header[3];
-                int flags = header[5];
-                int tagSize = ReadSynchsafeInt(header, 6);
-                if (tagSize <= 0 || tagSize > fs.Length - 10)
-                    return null;
-
-                byte[] tagData = new byte[tagSize];
-                if (fs.Read(tagData, 0, tagData.Length) != tagData.Length)
-                    return null;
-
-                if ((flags & 0x80) != 0)
-                    tagData = RemoveUnsynchronisation(tagData);
-
-                if (majorVersion == 2)
-                    return ReadId3v22ImageBytes(tagData);
-
-                if (majorVersion == 3 || majorVersion == 4)
-                    return ReadId3v23Or24ImageBytes(tagData, majorVersion, (flags & 0x40) != 0);
-            }
-
-            return null;
-        }
-
-        private byte[] ReadId3v23Or24ImageBytes(byte[] tagData, int majorVersion, bool hasExtendedHeader)
-        {
-            int index = 0;
-
-            if (hasExtendedHeader && tagData.Length >= 4)
-            {
-                int extendedSize = majorVersion == 4
-                    ? ReadSynchsafeInt(tagData, 0)
-                    : ReadBigEndianInt(tagData, 0);
-                index = Math.Max(0, Math.Min(tagData.Length, extendedSize + (majorVersion == 3 ? 4 : 0)));
-            }
-
-            while (index + 10 <= tagData.Length)
-            {
-                string frameId = System.Text.Encoding.ASCII.GetString(tagData, index, 4);
-                if (string.IsNullOrWhiteSpace(frameId) || frameId.Trim('\0').Length == 0)
-                    break;
-
-                int frameSize = majorVersion == 4
-                    ? ReadSynchsafeInt(tagData, index + 4)
-                    : ReadBigEndianInt(tagData, index + 4);
-                if (frameSize <= 0 || index + 10 + frameSize > tagData.Length)
-                    break;
-
-                if (frameId == "APIC")
-                    return ExtractApicImageBytes(tagData, index + 10, frameSize);
-
-                index += 10 + frameSize;
-            }
-
-            return null;
-        }
-
-        private byte[] ReadId3v22ImageBytes(byte[] tagData)
-        {
-            int index = 0;
-            while (index + 6 <= tagData.Length)
-            {
-                string frameId = System.Text.Encoding.ASCII.GetString(tagData, index, 3);
-                if (string.IsNullOrWhiteSpace(frameId) || frameId.Trim('\0').Length == 0)
-                    break;
-
-                int frameSize = (tagData[index + 3] << 16) | (tagData[index + 4] << 8) | tagData[index + 5];
-                if (frameSize <= 0 || index + 6 + frameSize > tagData.Length)
-                    break;
-
-                if (frameId == "PIC")
-                    return ExtractPicImageBytes(tagData, index + 6, frameSize);
-
-                index += 6 + frameSize;
-            }
-
-            return null;
-        }
-
-        private byte[] ExtractApicImageBytes(byte[] data, int start, int size)
-        {
-            int end = start + size;
-            int index = start;
-            if (index >= end)
-                return null;
-
-            byte encoding = data[index++];
-
-            while (index < end && data[index] != 0)
-                index++;
-            index++;
-
-            if (index >= end)
-                return null;
-
-            index++;
-            index = SkipEncodedTerminatedString(data, index, end, encoding);
-            if (index >= end)
-                return null;
-
-            return CopyRange(data, index, end - index);
-        }
-
-        private byte[] ExtractPicImageBytes(byte[] data, int start, int size)
-        {
-            int end = start + size;
-            int index = start;
-            if (index + 5 >= end)
-                return null;
-
-            byte encoding = data[index++];
-            index += 3;
-            index++;
-            index = SkipEncodedTerminatedString(data, index, end, encoding);
-            if (index >= end)
-                return null;
-
-            return CopyRange(data, index, end - index);
-        }
-
-        private int SkipEncodedTerminatedString(byte[] data, int index, int end, byte encoding)
-        {
-            if (encoding == 1 || encoding == 2)
-            {
-                while (index + 1 < end)
-                {
-                    if (data[index] == 0 && data[index + 1] == 0)
-                        return index + 2;
-                    index += 2;
-                }
-                return end;
-            }
-
-            while (index < end && data[index] != 0)
-                index++;
-            return Math.Min(end, index + 1);
-        }
-
-        private int ReadSynchsafeInt(byte[] data, int index)
-        {
-            return ((data[index] & 0x7F) << 21) |
-                   ((data[index + 1] & 0x7F) << 14) |
-                   ((data[index + 2] & 0x7F) << 7) |
-                   (data[index + 3] & 0x7F);
-        }
-
-        private int ReadBigEndianInt(byte[] data, int index)
-        {
-            return (data[index] << 24) |
-                   (data[index + 1] << 16) |
-                   (data[index + 2] << 8) |
-                   data[index + 3];
-        }
-
-        private byte[] RemoveUnsynchronisation(byte[] data)
-        {
-            var cleaned = new System.Collections.Generic.List<byte>(data.Length);
-            for (int i = 0; i < data.Length; i++)
-            {
-                if (i + 1 < data.Length && data[i] == 0xFF && data[i + 1] == 0x00)
-                {
-                    cleaned.Add(0xFF);
-                    i++;
-                }
-                else
-                {
-                    cleaned.Add(data[i]);
-                }
-            }
-
-            return cleaned.ToArray();
-        }
-
-        private byte[] CopyRange(byte[] data, int start, int length)
-        {
-            var result = new byte[length];
-            Buffer.BlockCopy(data, start, result, 0, length);
-            return result;
-        }
-
-        private string FindSongSpecificCoverImagePath(Song song)
-        {
-            if (song == null || string.IsNullOrWhiteSpace(song.FilePath))
-                return null;
-
-            string dir = System.IO.Path.GetDirectoryName(song.FilePath);
-            if (string.IsNullOrWhiteSpace(dir) || !System.IO.Directory.Exists(dir))
-                return null;
-
-            string fileNameNoExt = System.IO.Path.GetFileNameWithoutExtension(song.FilePath);
-            string[] exactCandidates = new[]
-            {
-                $"{fileNameNoExt}.jpg",
-                $"{fileNameNoExt}.jpeg",
-                $"{fileNameNoExt}.png",
-                $"{fileNameNoExt}.bmp",
-                $"{fileNameNoExt}.gif"
-            };
-
-            foreach (var candidate in exactCandidates)
-            {
-                string path = System.IO.Path.Combine(dir, candidate);
-                if (System.IO.File.Exists(path))
-                    return path;
-            }
-
-            string normalizedTarget = NormalizeName(fileNameNoExt);
-            if (string.IsNullOrWhiteSpace(normalizedTarget))
-                return null;
-
-            var extensions = new[] { ".jpg", ".jpeg", ".png", ".bmp", ".gif" };
-            foreach (var file in System.IO.Directory.EnumerateFiles(dir))
-            {
-                string ext = System.IO.Path.GetExtension(file).ToLowerInvariant();
-                if (!extensions.Contains(ext))
-                    continue;
-
-                string name = System.IO.Path.GetFileNameWithoutExtension(file);
-                string normalizedName = NormalizeName(name);
-                if (normalizedName.Contains(normalizedTarget) || normalizedTarget.Contains(normalizedName))
-                    return file;
-            }
-
-            return null;
         }
 
         private void DisposePlaylistImages()
@@ -1322,19 +1033,21 @@ namespace Melosoul
 
         private void btnAdd_Click(object sender, EventArgs e)
         {
-            AddSongDialog frm = new AddSongDialog();
-            if (frm.ShowDialog() == DialogResult.OK && frm.ResultSong != null)
+            using (AddSongDialog frm = new AddSongDialog())
             {
-                if (PlaylistContainsFile(frm.ResultSong.FilePath))
+                if (frm.ShowDialog() == DialogResult.OK && frm.ResultSong != null)
                 {
-                    MessageBox.Show("File này đã tồn tại trong playlist.", "Trùng lặp",
-                        MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    return;
-                }
+                    if (PlaylistContainsFile(frm.ResultSong.FilePath))
+                    {
+                        MessageBox.Show("File này đã tồn tại trong playlist.", "Trùng lặp",
+                            MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        return;
+                    }
 
-                _playlist.AddLast(frm.ResultSong);
-                RefreshPlaylistUI();
-                lblStatus.Text = $"Đã thêm: {frm.ResultSong.Title}";
+                    _playlist.AddLast(frm.ResultSong);
+                    RefreshPlaylistUI();
+                    lblStatus.Text = $"Đã thêm: {frm.ResultSong.Title}";
+                }
             }
         }
 
@@ -1346,8 +1059,7 @@ namespace Melosoul
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
-            string title = dgvPlaylist.SelectedRows[0].Cells["colTitle"].Value?.ToString();
-            var song = _playlist.ToList().Find(s => s.Title == title);
+            var song = GetSongFromRow(dgvPlaylist.SelectedRows[0]);
             if (song == null) return;
 
             if (MessageBox.Show($"Xóa bài \"{song.Title}\"?", "Xác nhận",
@@ -1390,16 +1102,25 @@ namespace Melosoul
 
         private async void btnLoad_Click(object sender, EventArgs e)
         {
-            OpenFileDialog dlg = new OpenFileDialog
+            using (OpenFileDialog dlg = new OpenFileDialog
             {
                 Filter = "Audio files|*.mp3;*.wav;*.wma;*.aac;*.flac;*.m4a|All files|*.*",
                 Multiselect = true,
                 Title = "Chọn file nhạc"
-            };
-            if (dlg.ShowDialog() != DialogResult.OK) return;
+            })
+            {
+                if (dlg.ShowDialog() != DialogResult.OK) return;
 
-            string[] files = dlg.FileNames;
-            if (files.Length == 0) return;
+                string[] files = dlg.FileNames;
+                if (files.Length == 0) return;
+
+                await AddFilesToPlaylistAsync(files);
+            }
+        }
+
+        private async Task AddFilesToPlaylistAsync(string[] files)
+        {
+            if (files == null || files.Length == 0) return;
 
             var existingPaths = new System.Collections.Generic.HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (var s in _playlist.ToList())
@@ -1459,6 +1180,29 @@ namespace Melosoul
 
                 SetLoadingState(false);
             }
+        }
+
+        private void dgvPlaylist_DragEnter(object sender, DragEventArgs e)
+        {
+            if (!e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                e.Effect = DragDropEffects.None;
+                return;
+            }
+
+            string[] files = e.Data.GetData(DataFormats.FileDrop) as string[];
+            e.Effect = files != null && files.Any(IsValidFile)
+                ? DragDropEffects.Copy
+                : DragDropEffects.None;
+        }
+
+        private async void dgvPlaylist_DragDrop(object sender, DragEventArgs e)
+        {
+            if (!e.Data.GetDataPresent(DataFormats.FileDrop))
+                return;
+
+            string[] files = e.Data.GetData(DataFormats.FileDrop) as string[];
+            await AddFilesToPlaylistAsync(files);
         }
 
         private async void btnSave_Click(object sender, EventArgs e)
@@ -1760,6 +1504,8 @@ namespace Melosoul
                 var rowIndex = dgvPlaylist.Rows.Add(i + 1, kq[i].Title, kq[i].Artist, "--:--", null);
                 dgvPlaylist.Rows[rowIndex].Tag = kq[i].ID;
             }
+            lblSongCount.Text = $"{kq.Count}/{_playlist.Count} bài hát";
+            UpdatePlaylistScrollBar();
             UpdatePlaylistDurationsAsync(kq);
             UpdatePlaylistImagesAsync(kq);
         }

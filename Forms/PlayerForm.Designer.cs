@@ -57,6 +57,7 @@
             this.lblTimeEnd = new System.Windows.Forms.Label();
             this.trackVolume = new Melosoul.Helpers.CustomVolumeSlider();
             this.lblCurrentSong = new System.Windows.Forms.Label();
+            this.chkRepeatOne = new System.Windows.Forms.CheckBox();
             this.chkRepeatAll = new System.Windows.Forms.CheckBox();
             this.picAlbum = new System.Windows.Forms.PictureBox();
             this.lbldangphat = new System.Windows.Forms.Label();
@@ -246,6 +247,7 @@
             this.pnlRight.Controls.Add(this.lblTimeEnd);
             this.pnlRight.Controls.Add(this.trackVolume);
             this.pnlRight.Controls.Add(this.lblCurrentSong);
+            this.pnlRight.Controls.Add(this.chkRepeatOne);
             this.pnlRight.Controls.Add(this.chkRepeatAll);
             this.pnlRight.Controls.Add(this.picAlbum);
             this.pnlRight.Controls.Add(this.lbldangphat);
@@ -260,7 +262,7 @@
             this.Shuffle.AutoSize = true;
             this.Shuffle.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.Shuffle.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(102)))), ((int)(((byte)(102)))), ((int)(((byte)(102)))));
-            this.Shuffle.Location = new System.Drawing.Point(24, 551);
+            this.Shuffle.Location = new System.Drawing.Point(24, 537);
             this.Shuffle.Name = "Shuffle";
             this.Shuffle.Size = new System.Drawing.Size(75, 19);
             this.Shuffle.TabIndex = 14;
@@ -423,12 +425,24 @@
             this.lblCurrentSong.Text = "Chưa chọn bài nào";
             this.lblCurrentSong.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
+            // chkRepeatOne
+            // 
+            this.chkRepeatOne.AutoSize = true;
+            this.chkRepeatOne.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.chkRepeatOne.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(102)))), ((int)(((byte)(102)))), ((int)(((byte)(102)))));
+            this.chkRepeatOne.Location = new System.Drawing.Point(24, 562);
+            this.chkRepeatOne.Name = "chkRepeatOne";
+            this.chkRepeatOne.Size = new System.Drawing.Size(99, 19);
+            this.chkRepeatOne.TabIndex = 13;
+            this.chkRepeatOne.Text = "🔂 Repeat One";
+            this.chkRepeatOne.UseVisualStyleBackColor = true;
+            // 
             // chkRepeatAll
             // 
             this.chkRepeatAll.AutoSize = true;
             this.chkRepeatAll.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.chkRepeatAll.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(102)))), ((int)(((byte)(102)))), ((int)(((byte)(102)))));
-            this.chkRepeatAll.Location = new System.Drawing.Point(24, 575);
+            this.chkRepeatAll.Location = new System.Drawing.Point(24, 587);
             this.chkRepeatAll.Name = "chkRepeatAll";
             this.chkRepeatAll.Size = new System.Drawing.Size(91, 19);
             this.chkRepeatAll.TabIndex = 9;
@@ -550,6 +564,7 @@
             this.dgvPlaylist.RowTemplate.Height = 44;
             this.dgvPlaylist.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.dgvPlaylist.Size = new System.Drawing.Size(717, 587);
+            this.dgvPlaylist.ScrollBars = System.Windows.Forms.ScrollBars.None;
             this.dgvPlaylist.TabIndex = 5;
             this.dgvPlaylist.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvPlaylist_CellDoubleClick);
             this.dgvPlaylist.CellMouseClick += new System.Windows.Forms.DataGridViewCellMouseEventHandler(this.dgvPlaylist_CellMouseClick);
@@ -669,6 +684,7 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn colDuration;
         private System.Windows.Forms.DataGridViewImageColumn colImage;
         private System.Windows.Forms.CheckBox Shuffle;
+        private System.Windows.Forms.CheckBox chkRepeatOne;
         private System.Windows.Forms.CheckBox chkRepeatAll;
         private System.Windows.Forms.Button btnSave;
         private System.Windows.Forms.Button btnReset;
