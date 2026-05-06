@@ -245,6 +245,19 @@ public class PlaylistLinkedList : IDisposable
         finally { _rwLock.ExitWriteLock(); }
     }
 
+    public Song GetById(string id)
+    {
+        if (string.IsNullOrWhiteSpace(id))
+            return null;
+
+        _rwLock.EnterReadLock();
+        try
+        {
+            return _idIndex.TryGetValue(id, out Node node) ? node.Data : null;
+        }
+        finally { _rwLock.ExitReadLock(); }
+    }
+
     public bool UpdateSongMetadata(string id, string title, string artist)
     {
         _rwLock.EnterWriteLock();

@@ -64,8 +64,6 @@
     <Compile Include="Helpers\CustomVolumeSlider.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="Helpers\FileIOHelper.cs" />
-    <Compile Include="Models\Node.cs" />
     <Compile Include="Models\Song.cs" />
     <Compile Include="Forms\PlayerForm.cs">
       <SubType>Form</SubType>
@@ -82,8 +80,6 @@
     </Compile>
     <Compile Include="Services\AlbumArtService.cs" />
     <Compile Include="Services\AutoSaveService.cs" />
-    <Compile Include="Services\AudioPlayer.cs" />
-    <Compile Include="Services\PlaylistManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="Forms\AddSongDialog.resx">
       <DependentUpon>AddSongDialog.cs</DependentUpon>

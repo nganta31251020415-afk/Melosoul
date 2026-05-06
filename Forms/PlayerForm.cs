@@ -24,6 +24,7 @@ namespace Melosoul
         private readonly AlbumArtService _albumArtService = new AlbumArtService();
         private readonly AutoSaveService _autoSaveService = new AutoSaveService();
         private int _autoNextQueued;
+        private int _playlistRenderVersion;
         private string _currentAlbumSongId;
 
         [System.Runtime.InteropServices.DllImport("uxtheme.dll",
@@ -339,12 +340,33 @@ namespace Melosoul
             if (string.IsNullOrWhiteSpace(songId))
                 return null;
 
-            return _playlist.ToList().Find(s => s.ID == songId);
+            return _playlist.GetById(songId);
         }
 
         private Song GetSongFromRow(DataGridViewRow row)
         {
             return FindSongById(row?.Tag?.ToString());
+        }
+
+        private void RenderPlaylist(System.Collections.Generic.List<Song> list, string countText)
+        {
+            if (list == null)
+                list = new System.Collections.Generic.List<Song>();
+
+            int renderVersion = System.Threading.Interlocked.Increment(ref _playlistRenderVersion);
+            DisposePlaylistImages();
+            dgvPlaylist.Rows.Clear();
+            for (int i = 0; i < list.Count; i++)
+            {
+                var rowIndex = dgvPlaylist.Rows.Add(i + 1, list[i].Title, list[i].Artist, "--:--", null);
+                dgvPlaylist.Rows[rowIndex].Tag = list[i].ID;
+            }
+
+            lblSongCount.Text = countText;
+            UpdatePlaylistScrollBar();
+            UpdatePlaylistDurationsAsync(list, renderVersion);
+            UpdatePlaylistImagesAsync(list, renderVersion);
+            UpdatePlaylistSelection();
         }
 
         private Song CreateSongFromFile(string filePath)
@@ -598,18 +620,7 @@ namespace Melosoul
         private void RefreshPlaylistUI()
         {
             var list = _playlist.ToList();
-            DisposePlaylistImages();
-            dgvPlaylist.Rows.Clear();
-            for (int i = 0; i < list.Count; i++)
-            {
-                var rowIndex = dgvPlaylist.Rows.Add(i + 1, list[i].Title, list[i].Artist, "--:--", null);
-                dgvPlaylist.Rows[rowIndex].Tag = list[i].ID;
-            }
-            lblSongCount.Text = $"{_playlist.Count} bài hát";
-            UpdatePlaylistScrollBar();
-            UpdatePlaylistDurationsAsync(list);
-            UpdatePlaylistImagesAsync(list);
-            UpdatePlaylistSelection();
+            RenderPlaylist(list, $"{list.Count} bài hát");
         }
 
         private void UpdatePlaylistSelection()
@@ -891,7 +902,7 @@ namespace Melosoul
             // Removed: using popup dialog instead of inline edit
         }
 
-        private void UpdatePlaylistDurationsAsync(System.Collections.Generic.List<Song> list)
+        private void UpdatePlaylistDurationsAsync(System.Collections.Generic.List<Song> list, int renderVersion)
         {
             Task.Run(() =>
             {
@@ -902,18 +913,23 @@ namespace Melosoul
                     durationMap[song.ID] = duration;
                 }
 
+                if (renderVersion != _playlistRenderVersion)
+                    return;
+
                 if (dgvPlaylist.IsDisposed) return;
 
                 if (dgvPlaylist.InvokeRequired)
                 {
                     dgvPlaylist.Invoke(new Action(() =>
                     {
-                        UpdateDurationsInUI(durationMap);
+                        if (renderVersion == _playlistRenderVersion)
+                            UpdateDurationsInUI(durationMap);
                     }));
                 }
                 else
                 {
-                    UpdateDurationsInUI(durationMap);
+                    if (renderVersion == _playlistRenderVersion)
+                        UpdateDurationsInUI(durationMap);
                 }
             });
         }
@@ -923,15 +939,16 @@ namespace Melosoul
             for (int i = 0; i < dgvPlaylist.Rows.Count; i++)
             {
                 var row = dgvPlaylist.Rows[i];
-                var song = GetSongFromRow(row);
-                if (song != null && durationMap.TryGetValue(song.ID, out string duration))
+                string songId = row.Tag?.ToString();
+                if (!string.IsNullOrEmpty(songId) &&
+                    durationMap.TryGetValue(songId, out string duration))
                 {
                     row.Cells["colDuration"].Value = duration;
                 }
             }
         }
 
-        private void UpdatePlaylistImagesAsync(System.Collections.Generic.List<Song> list)
+        private void UpdatePlaylistImagesAsync(System.Collections.Generic.List<Song> list, int renderVersion)
         {
             if (dgvPlaylist == null ||
                 !dgvPlaylist.Columns.Contains("colImage") ||
@@ -948,6 +965,12 @@ namespace Melosoul
                     var image = _albumArtService.CreatePlaylistThumbnail(song);
                     if (image != null)
                         imageMap[song.ID] = image;
+                }
+
+                if (renderVersion != _playlistRenderVersion)
+                {
+                    DisposeImages(imageMap.Values);
+                    return;
                 }
 
                 if (dgvPlaylist.IsDisposed)
@@ -1497,17 +1520,7 @@ namespace Melosoul
             string kw = txtSearch.Text.Trim();
             if (string.IsNullOrWhiteSpace(kw)) { RefreshPlaylistUI(); return; }
             var kq = _playlist.Find(kw);
-            DisposePlaylistImages();
-            dgvPlaylist.Rows.Clear();
-            for (int i = 0; i < kq.Count; i++)
-            {
-                var rowIndex = dgvPlaylist.Rows.Add(i + 1, kq[i].Title, kq[i].Artist, "--:--", null);
-                dgvPlaylist.Rows[rowIndex].Tag = kq[i].ID;
-            }
-            lblSongCount.Text = $"{kq.Count}/{_playlist.Count} bài hát";
-            UpdatePlaylistScrollBar();
-            UpdatePlaylistDurationsAsync(kq);
-            UpdatePlaylistImagesAsync(kq);
+            RenderPlaylist(kq, $"{kq.Count}/{_playlist.Count} bài hát");
         }
 
         private void chkRepeatAll_CheckedChanged(object sender, EventArgs e)
