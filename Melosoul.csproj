@@ -12,6 +12,10 @@
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <Deterministic>true</Deterministic>
+    <GenerateResourceMSBuildArchitecture>CurrentArchitecture</GenerateResourceMSBuildArchitecture>
+    <GenerateResourceMSBuildRuntime>CurrentRuntime</GenerateResourceMSBuildRuntime>
+    <GenerateResourceUsePreserializedResources>true</GenerateResourceUsePreserializedResources>
+    <DisableOutOfProcTaskHost>true</DisableOutOfProcTaskHost>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -36,6 +40,16 @@
     <Reference Include="ComponentFactory.Krypton.Toolkit">
       <HintPath>..\..\..\Download\Krypton-master\Krypton-master\Bin\ComponentFactory.Krypton.Toolkit.dll</HintPath>
     </Reference>
+    <Reference Include="Interop.WMPLib">
+      <HintPath>lib\Interop.WMPLib.dll</HintPath>
+      <EmbedInteropTypes>True</EmbedInteropTypes>
+    </Reference>
+    <Reference Include="TagLibSharp">
+      <HintPath>$(NuGetPackageRoot)taglibsharp\2.3.0\lib\netstandard2.0\TagLibSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Resources.Extensions">
+      <HintPath>$(NuGetPackageRoot)system.resources.extensions\9.0.10\lib\net462\System.Resources.Extensions.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Design" />
@@ -52,6 +66,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="TagLibSharp" Version="2.3.0" />
+    <PackageReference Include="System.Resources.Extensions" Version="9.0.10" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Forms\AddSongDialog.cs">
@@ -68,6 +83,15 @@
     <Compile Include="Forms\PlayerForm.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Forms\PlayerForm.Playback.cs">
+      <DependentUpon>PlayerForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\PlayerForm.Playlist.cs">
+      <DependentUpon>PlayerForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\PlayerForm.IO.cs">
+      <DependentUpon>PlayerForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\PlayerForm.Designer.cs">
       <DependentUpon>PlayerForm.cs</DependentUpon>
     </Compile>
@@ -80,6 +104,11 @@
     </Compile>
     <Compile Include="Services\AlbumArtService.cs" />
     <Compile Include="Services\AutoSaveService.cs" />
+    <Compile Include="Services\AppText.cs" />
+    <Compile Include="Services\DurationService.cs" />
+    <Compile Include="Services\FileImportService.cs" />
+    <Compile Include="Services\MediaMetadataService.cs" />
+    <Compile Include="Services\PlaylistLoaderService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="Forms\AddSongDialog.resx">
       <DependentUpon>AddSongDialog.cs</DependentUpon>
@@ -108,26 +137,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <COMReference Include="stdole">
-      <Guid>{00020430-0000-0000-C000-000000000046}</Guid>
-      <VersionMajor>2</VersionMajor>
-      <VersionMinor>0</VersionMinor>
-      <Lcid>0</Lcid>
-      <WrapperTool>primary</WrapperTool>
-      <Isolated>False</Isolated>
-      <EmbedInteropTypes>True</EmbedInteropTypes>
-    </COMReference>
-    <COMReference Include="WMPLib">
-      <Guid>{6BF52A50-394A-11D3-B153-00C04F79FAA6}</Guid>
-      <VersionMajor>1</VersionMajor>
-      <VersionMinor>0</VersionMinor>
-      <Lcid>0</Lcid>
-      <WrapperTool>tlbimp</WrapperTool>
-      <Isolated>False</Isolated>
-      <EmbedInteropTypes>True</EmbedInteropTypes>
-    </COMReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

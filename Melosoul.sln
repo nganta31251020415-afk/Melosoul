@@ -5,6 +5,8 @@ VisualStudioVersion = 17.14.36414.22 d17.14
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Melosoul", "Melosoul.csproj", "{F4D5B7C4-075D-41E4-88B3-8FD1B93D0040}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Melosoul.Tests", "Melosoul.Tests\Melosoul.Tests.csproj", "{A8F2A129-1D78-4D1A-AC08-D089E0E7749E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{F4D5B7C4-075D-41E4-88B3-8FD1B93D0040}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F4D5B7C4-075D-41E4-88B3-8FD1B93D0040}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F4D5B7C4-075D-41E4-88B3-8FD1B93D0040}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A8F2A129-1D78-4D1A-AC08-D089E0E7749E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A8F2A129-1D78-4D1A-AC08-D089E0E7749E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A8F2A129-1D78-4D1A-AC08-D089E0E7749E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A8F2A129-1D78-4D1A-AC08-D089E0E7749E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

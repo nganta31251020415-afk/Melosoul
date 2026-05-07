@@ -623,7 +623,7 @@
             this.Controls.Add(this.pnlSearch);
             this.Controls.Add(this.pnlTop);
             this.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+            this.Icon = System.Drawing.SystemIcons.Application;
             this.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.MinimumSize = new System.Drawing.Size(800, 550);
             this.Name = "PlayerForm";
@@ -690,6 +690,5 @@
         private System.Windows.Forms.Button btnReset;
     }
 }
-
 
 

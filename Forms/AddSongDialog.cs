@@ -1,12 +1,16 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
+using Melosoul.Services;
 using WMPLib;
 
 namespace Melosoul
 {
     public partial class AddSongDialog : Form
     {
+        private static readonly string[] SupportedAudioExtensions =
+            { ".mp3", ".mp4", ".wav", ".wma", ".aac", ".flac", ".m4a" };
+
         public Song ResultSong { get; private set; }
 
         public AddSongDialog()
@@ -18,14 +22,36 @@ namespace Melosoul
         {
             using (OpenFileDialog dlg = new OpenFileDialog())
             {
-                dlg.Filter = "MP3 files|*.mp3|All files|*.*";
-                dlg.Title = "Chọn file nhạc";
+                dlg.Filter = AppText.AudioFileFilter;
+                dlg.Title = AppText.SelectMusicTitle;
                 if (dlg.ShowDialog() == DialogResult.OK)
                 {
+                    if (!IsSupportedAudioFile(dlg.FileName))
+                    {
+                        MessageBox.Show(AppText.AudioOnlyHint,
+                            AppText.InvalidFileTitle,
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Warning);
+                        return;
+                    }
                     txtPath.Text = dlg.FileName;
                     LoadMetadataFromFile(dlg.FileName);
                 }
             }
+        }
+
+        private bool IsSupportedAudioFile(string filePath)
+        {
+            if (string.IsNullOrWhiteSpace(filePath))
+                return false;
+
+            string extension = System.IO.Path.GetExtension(filePath).ToLowerInvariant();
+            foreach (string supported in SupportedAudioExtensions)
+            {
+                if (extension == supported)
+                    return true;
+            }
+            return false;
         }
 
         private void LoadMetadataFromFile(string filePath)
@@ -70,16 +96,24 @@ namespace Melosoul
         {
             if (string.IsNullOrWhiteSpace(txtTitle.Text))
             {
-                MessageBox.Show("Vui lòng nhập tên bài hát!",
-                    "Thiếu thông tin",
+                MessageBox.Show(AppText.NeedSongTitle,
+                    AppText.MissingInfoTitle,
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Warning);
                 return;
             }
             if (string.IsNullOrWhiteSpace(txtPath.Text))
             {
-                MessageBox.Show("Vui lòng chọn file MP3!",
-                    "Thiếu thông tin",
+                MessageBox.Show(AppText.NeedAudioFile,
+                    AppText.MissingInfoTitle,
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+                return;
+            }
+            if (!IsSupportedAudioFile(txtPath.Text.Trim()))
+            {
+                MessageBox.Show(AppText.AudioOnlyHint,
+                    AppText.InvalidFileTitle,
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Warning);
                 return;
@@ -99,4 +133,3 @@ namespace Melosoul
         }
     }
 }
-
