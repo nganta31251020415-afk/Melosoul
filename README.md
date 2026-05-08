@@ -1,10 +1,10 @@
-# 🎵 Melosoul — Music Playlist Manager
+# Melosoul — Music Playlist Manager
 
 > Ứng dụng quản lý playlist nhạc desktop được xây dựng bằng **C# WinForms**, sử dụng **Doubly Linked List** tự cài đặt làm cấu trúc dữ liệu cốt lõi.
 
 ---
 
-## 📋 Mục lục
+## Mục lục
 
 - [Thành viên nhóm](#-thành-viên-nhóm)
 - [Giới thiệu](#-giới-thiệu)
@@ -27,9 +27,10 @@
 
 **Học kỳ:** *đầu 2026*
 
-## 👥 Thành viên Nhóm
+## Thành viên Nhóm
 
 | Họ tên | MSSV | Vai trò |
+| --- | --- | --- |
 | Tạ Ngọc Bảo Ngân | 31251020415 | Thiết kế Winforms & Tích hợp code |
 | Nguyễn Ngọc Vân Lâm | 31251022996 | Code xử lý chuyển đổi bài hát và viết báo cáo |
 | Nguyễn Trang Nhật Mai | 31251022338 | Thiết kế và cài đặt cấu trúc dữ liệu |
@@ -38,7 +39,7 @@
 ---
 
 
-## 🎯 Giới thiệu
+## Giới thiệu
 
 **Melosoul** là ứng dụng nghe nhạc desktop chạy trên Windows, được phát triển trong khuôn khổ môn học **Cấu trúc Dữ liệu và Giải thuật** tại **Trường Đại học Kinh tế TP.HCM (UEH)**.
 
@@ -48,7 +49,7 @@ Ngoài phần CTDL bắt buộc, nhóm đã mở rộng thêm nhiều tính năn
 
 ---
 
-## ✨ Tính năng
+## Tính năng
 
 ### Phát nhạc
 
@@ -86,7 +87,7 @@ Ngoài phần CTDL bắt buộc, nhóm đã mở rộng thêm nhiều tính năn
 
 ---
 
-## 🧠 Cấu trúc Dữ liệu & Thuật toán
+## Cấu trúc Dữ liệu & Thuật toán
 
 ### 1. Doubly Linked List — `PlaylistLinkedList`
 
@@ -179,7 +180,7 @@ for (int n = nodes.Length - 1; n > 0; n--)
 
 ---
 
-## 🏗 Kiến trúc Dự án
+## Kiến trúc Dự án
 
 ```
 Melosoul/
@@ -254,7 +255,7 @@ DataGridView cap nhat
 
 ---
 
-## 💿 Cài đặt & Chạy
+## Cài đặt & Chạy
 
 ### Yêu cầu hệ thống
 
@@ -294,7 +295,7 @@ Nhấn `F5` hoặc chọn `Debug > Start Debugging`.
 
 ---
 
-## 📖 Hướng dẫn Sử dụng
+## Hướng dẫn Sử dụng
 
 ### Thêm nhạc vào playlist
 
@@ -334,7 +335,7 @@ Nhấn `F5` hoặc chọn `Debug > Start Debugging`.
 
 ---
 
-## 🛠 Công nghệ Sử dụng
+## Công nghệ Sử dụng
 
 | Thành phần | Công nghệ |
 | :--- | :--- |
@@ -351,7 +352,7 @@ Nhấn `F5` hoặc chọn `Debug > Start Debugging`.
 
 ---
 
-## 🧪 Unit Tests
+## Unit Tests
 
 Dự án có project test riêng `Melosoul.Tests` với **MSTest**.
 
@@ -384,7 +385,7 @@ dotnet test Melosoul.Tests/Melosoul.Tests.csproj
 
 ---
 
-## ⚠️ Hạn chế hiện tại
+## Hạn chế hiện tại
 
 - Build phụ thuộc COM/WMP và DLL Krypton Toolkit local — cần cấu hình `HintPath` đúng trên máy mới.
 - **Save playlist** hiện chỉ xuất được file `.mp3`; các định dạng khác (`.wav`, `.flac`, ...) bị bỏ qua.
@@ -393,7 +394,7 @@ dotnet test Melosoul.Tests/Melosoul.Tests.csproj
 
 ---
 
-## 🚀 Hướng phát triển đề xuất
+## Hướng phát triển đề xuất
 
 - **Chuẩn hóa dependency:** Đưa Krypton Toolkit lên NuGet, bỏ `HintPath` local để build portable hơn.
 - **Mở rộng Save playlist:** Hỗ trợ xuất toàn bộ định dạng audio thay vì chỉ `.mp3`.
@@ -404,7 +405,7 @@ dotnet test Melosoul.Tests/Melosoul.Tests.csproj
 
 ---
 
-## 📝 Ghi chú kỹ thuật
+## Ghi chú kỹ thuật
 
 ### Tại sao dùng Doubly Linked List thay vì `List<T>`?
 
