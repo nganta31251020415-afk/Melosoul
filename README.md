@@ -21,7 +21,7 @@
 
 ---
 
-**Trường:** Đại học Kinh tế TP.HCM (UEH)
+Đại học Kinh tế TP.HCM (UEH)
 
 **Môn học:** Cấu trúc Dữ liệu và Giải thuật
 
