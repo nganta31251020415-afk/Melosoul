@@ -37,12 +37,12 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="ComponentFactory.Krypton.Toolkit">
-      <HintPath>..\..\..\Download\Krypton-master\Krypton-master\Bin\ComponentFactory.Krypton.Toolkit.dll</HintPath>
-    </Reference>
     <Reference Include="Interop.WMPLib">
       <HintPath>lib\Interop.WMPLib.dll</HintPath>
       <EmbedInteropTypes>True</EmbedInteropTypes>
+    </Reference>
+    <Reference Include="ComponentFactory.Krypton.Toolkit">
+      <HintPath>$(NuGetPackageRoot)krypton.components.suite\4.5.9\lib\net40\ComponentFactory.Krypton.Toolkit.dll</HintPath>
     </Reference>
     <Reference Include="TagLibSharp">
       <HintPath>$(NuGetPackageRoot)taglibsharp\2.3.0\lib\netstandard2.0\TagLibSharp.dll</HintPath>
@@ -65,6 +65,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Krypton.Components.Suite" Version="4.5.9" />
     <PackageReference Include="TagLibSharp" Version="2.3.0" />
     <PackageReference Include="System.Resources.Extensions" Version="9.0.10" />
   </ItemGroup>
@@ -85,12 +86,15 @@
     </Compile>
     <Compile Include="Forms\PlayerForm.Playback.cs">
       <DependentUpon>PlayerForm.cs</DependentUpon>
+      <SubType>Form</SubType>
     </Compile>
     <Compile Include="Forms\PlayerForm.Playlist.cs">
       <DependentUpon>PlayerForm.cs</DependentUpon>
+      <SubType>Form</SubType>
     </Compile>
     <Compile Include="Forms\PlayerForm.IO.cs">
       <DependentUpon>PlayerForm.cs</DependentUpon>
+      <SubType>Form</SubType>
     </Compile>
     <Compile Include="Forms\PlayerForm.Designer.cs">
       <DependentUpon>PlayerForm.cs</DependentUpon>
