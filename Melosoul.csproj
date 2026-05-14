@@ -101,12 +101,6 @@
     <Compile Include="Services\MediaMetadataService.cs" />
     <Compile Include="Services\PlaylistLoaderService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <EmbeddedResource Include="Forms\AddSongDialog.resx">
-      <DependentUpon>AddSongDialog.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Forms\PlayerForm.resx">
-      <DependentUpon>PlayerForm.cs</DependentUpon>
-    </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>

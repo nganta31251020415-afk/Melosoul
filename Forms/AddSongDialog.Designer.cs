@@ -28,7 +28,6 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(AddSongDialog));
             this.tenbaihat = new System.Windows.Forms.Label();
             this.txtTitle = new System.Windows.Forms.TextBox();
             this.nghesi = new System.Windows.Forms.Label();
@@ -172,7 +171,6 @@
             this.Controls.Add(this.txtTitle);
             this.Controls.Add(this.tenbaihat);
             this.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.Name = "AddSongDialog";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
@@ -195,4 +193,3 @@
         private System.Windows.Forms.Button btnCancel;
     }
 }
-
