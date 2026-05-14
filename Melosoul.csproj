@@ -129,6 +129,9 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
+  <Target Name="UnblockResxFiles" BeforeTargets="PrepareResources" Condition="'$(OS)' == 'Windows_NT'">
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -Command &quot;Get-ChildItem -Path '$(MSBuildProjectDirectory)' -Recurse -Filter *.resx -File -ErrorAction SilentlyContinue | Unblock-File -ErrorAction SilentlyContinue&quot;" />
+  </Target>
   <ItemGroup>
     <COMReference Include="stdole">
       <Guid>{00020430-0000-0000-C000-000000000046}</Guid>
