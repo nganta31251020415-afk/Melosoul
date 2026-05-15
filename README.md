@@ -7,6 +7,7 @@
 ## Mục lục
 
 - [Thành viên nhóm](#-thành-viên-nhóm)
+- [Báo cáo](#-báo-cáo)
 - [Giới thiệu](#-giới-thiệu)
 - [Tính năng](#-tính-năng)
 - [Cấu trúc dữ liệu & Thuật toán](#-cấu-trúc-dữ-liệu--thuật-toán)
@@ -37,7 +38,11 @@
 | Trần Nguyễn Quỳnh Trâm | 31251024490 | Viết báo cáo, thuyết trình |
 
 ---
+## Báo cáo
 
+**Link dẫn đến báo cáo:** https://docs.google.com/document/d/1vW9ttJHE0tkALVftGr5Wh9BG469NvLfXajuwrj-UxX8/edit?usp=sharing
+
+---
 
 ## Giới thiệu
 
