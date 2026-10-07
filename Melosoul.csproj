@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{F4D5B7C4-075D-41E4-88B3-8FD1B93D0040}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <RootNamespace>Melosoul</RootNamespace>
+    <AssemblyName>Melosoul</AssemblyName>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <Deterministic>true</Deterministic>
+    <GenerateResourceMSBuildArchitecture>CurrentArchitecture</GenerateResourceMSBuildArchitecture>
+    <GenerateResourceMSBuildRuntime>CurrentRuntime</GenerateResourceMSBuildRuntime>
+    <GenerateResourceUsePreserializedResources>true</GenerateResourceUsePreserializedResources>
+    <DisableOutOfProcTaskHost>true</DisableOutOfProcTaskHost>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Design" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Deployment" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Krypton.Components.Suite" Version="4.5.9" />
+    <PackageReference Include="TagLibSharp" Version="2.3.0" />
+    <PackageReference Include="System.Resources.Extensions" Version="9.0.10" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Forms\AddSongDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\AddSongDialog.Designer.cs">
+      <DependentUpon>AddSongDialog.cs</DependentUpon>
+    </Compile>
+    <Compile Include="DataStructures\PlaylistLinkedList.cs" />
+    <Compile Include="Helpers\CustomVolumeSlider.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Models\MediaFile.cs" />
+    <Compile Include="Models\Song.cs" />
+    <Compile Include="Forms\PlayerForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\PlayerForm.Playback.cs">
+      <DependentUpon>PlayerForm.cs</DependentUpon>
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\PlayerForm.Playlist.cs">
+      <DependentUpon>PlayerForm.cs</DependentUpon>
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\PlayerForm.IO.cs">
+      <DependentUpon>PlayerForm.cs</DependentUpon>
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\PlayerForm.Designer.cs">
+      <DependentUpon>PlayerForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\RenameSongDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Program.cs" />
+    <Compile Include="Helpers\CustomPlaylistScrollBar.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Services\AlbumArtService.cs" />
+    <Compile Include="Services\IPlaylistStorage.cs" />
+    <Compile Include="Services\AutoSaveService.cs" />
+    <Compile Include="Services\AppText.cs" />
+    <Compile Include="Services\DurationService.cs" />
+    <Compile Include="Services\FileImportService.cs" />
+    <Compile Include="Services\MediaMetadataService.cs" />
+    <Compile Include="Services\PlaylistLoaderService.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+  </ItemGroup>
+  <Target Name="UnblockResxFiles" BeforeTargets="PrepareResources" Condition="'$(OS)' == 'Windows_NT'">
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -Command &quot;Get-ChildItem -Path '$(MSBuildProjectDirectory)' -Recurse -Filter *.resx -File -ErrorAction SilentlyContinue | Unblock-File -ErrorAction SilentlyContinue&quot;" />
+  </Target>
+  <ItemGroup>
+    <COMReference Include="stdole">
+      <Guid>{00020430-0000-0000-C000-000000000046}</Guid>
+      <VersionMajor>2</VersionMajor>
+      <VersionMinor>0</VersionMinor>
+      <Lcid>0</Lcid>
+      <WrapperTool>primary</WrapperTool>
+      <Isolated>False</Isolated>
+      <EmbedInteropTypes>True</EmbedInteropTypes>
+    </COMReference>
+    <COMReference Include="WMPLib">
+      <Guid>{6BF52A50-394A-11D3-B153-00C04F79FAA6}</Guid>
+      <VersionMajor>1</VersionMajor>
+      <VersionMinor>0</VersionMinor>
+      <Lcid>0</Lcid>
+      <WrapperTool>tlbimp</WrapperTool>
+      <Isolated>False</Isolated>
+      <EmbedInteropTypes>True</EmbedInteropTypes>
+    </COMReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>
