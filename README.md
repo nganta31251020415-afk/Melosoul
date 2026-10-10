@@ -39,7 +39,7 @@
 ---
 ## Báo cáo
 
-**Link dẫn đến báo cáo:** https://docs.google.com/document/d/1vW9ttJHE0tkALVftGr5Wh9BG469NvLfXajuwrj-UxX8/edit?usp=sharing
+**Link dẫn đến video:** [https://docs.google.com/document/d/1vW9ttJHE0tkALVftGr5Wh9BG469NvLfXajuwrj-UxX8/edit?usp=sharing](https://docs.google.com/document/d/1ofl5sIzn6TmkYrx7vcwDZ5pGIv_WeHg2wS4qelHZ9Uc/edit?usp=sharing)
 
 ---
 
