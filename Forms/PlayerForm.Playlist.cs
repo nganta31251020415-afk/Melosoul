@@ -69,7 +69,10 @@ namespace Melosoul
             dgvPlaylist.Rows.Clear();
             for (int i = 0; i < list.Count; i++)
             {
-                var rowIndex = dgvPlaylist.Rows.Add(i + 1, list[i].Title, list[i].Artist, AppText.UnknownDuration, null);
+                string dur = !string.IsNullOrWhiteSpace(list[i].Duration) && list[i].Duration != "--:--" 
+                             ? list[i].Duration 
+                             : AppText.UnknownDuration;
+                var rowIndex = dgvPlaylist.Rows.Add(i + 1, list[i].Title, list[i].Artist, dur, null);
                 dgvPlaylist.Rows[rowIndex].Tag = list[i].ID;
             }
 
@@ -267,7 +270,9 @@ namespace Melosoul
                 foreach (var song in list)
                 {
                     if (token.IsCancellationRequested) return;
+                    if (!string.IsNullOrWhiteSpace(song.Duration) && song.Duration != "--:--") continue;
                     string duration = GetDuration(song.FilePath);
+                    song.Duration = duration;
                     durationMap[song.ID] = duration;
                 }
 
@@ -383,6 +388,11 @@ namespace Melosoul
         private void chkRepeatAll_CheckedChanged(object sender, EventArgs e)
         {
             _playlist.IsRepeatAll = chkRepeatAll.Checked;
+        }
+
+        private void chkRepeatOne_CheckedChanged(object sender, EventArgs e)
+        {
+            _playlist.IsRepeatOne = chkRepeatOne.Checked;
         }
     }
 }

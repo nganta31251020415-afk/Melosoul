@@ -23,7 +23,7 @@ namespace Melosoul
         private bool _syncingPlaylistScrollBar;
         private bool _isSeekingProgressBar;
         private readonly AlbumArtService _albumArtService = new AlbumArtService();
-        private readonly AutoSaveService _autoSaveService = new AutoSaveService();
+        private readonly IPlaylistStorage _autoSaveService = new AutoSaveService();
         private readonly MediaMetadataService _metadataService = new MediaMetadataService();
         private readonly DurationService _durationService = new DurationService();
         private readonly FileImportService _fileImportService;

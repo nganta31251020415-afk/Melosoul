@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -107,6 +107,7 @@ public class PlaylistLinkedList : IDisposable
 
     public int Count { get; private set; }
     public bool IsRepeatAll { get; set; } = false;
+    public bool IsRepeatOne { get; set; } = false;
 
 
     // Đọc trạng thái (Read Lock) để UI gọi liên tục không bị đơ app
@@ -282,6 +283,7 @@ public class PlaylistLinkedList : IDisposable
         try
         {
             if (_current == null) return null;
+            if (IsRepeatOne) return _current.Data;
             if (_current.Next != null) _current = _current.Next;
             else if (IsRepeatAll && _head != null) _current = _head;
             else return null;
@@ -297,6 +299,7 @@ public class PlaylistLinkedList : IDisposable
         try
         {
             if (_current == null) return null;
+            if (IsRepeatOne) return _current.Data;
             if (_current.Prev != null) _current = _current.Prev;
             else if (IsRepeatAll && _tail != null) _current = _tail;
             else return null;

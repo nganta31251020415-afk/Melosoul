@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Melosoul.Services
 {
-    public class AutoSaveService
+    public class AutoSaveService : IPlaylistStorage
     {
         private readonly string _autoSavePath;
 

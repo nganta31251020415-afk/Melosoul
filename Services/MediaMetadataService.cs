@@ -98,11 +98,13 @@ namespace Melosoul.Services
             title = title?.Trim();
             artist = artist?.Trim();
 
+            string duration = GetDuration(filePath);
+
             return new Song(
                 Guid.NewGuid().ToString(),
                 string.IsNullOrWhiteSpace(title) ? Path.GetFileNameWithoutExtension(filePath) : title,
                 artist ?? string.Empty,
-                string.Empty,
+                duration,
                 filePath);
         }
 

@@ -10,7 +10,7 @@
 - [Báo cáo](#-báo-cáo)
 - [Giới thiệu](#-giới-thiệu)
 - [Tính năng](#-tính-năng)
-- [Cấu trúc dữ liệu & Thuật toán](#-cấu-trúc-dữ-liệu--thuật-toán)
+- [Áp dụng 4 tính chất OOP](#-áp-dụng-4-tính-chất-oop)
 - [Kiến trúc dự án](#-kiến-trúc-dự-án)
 - [Cài đặt & Chạy](#-cài-đặt--chạy)
 - [Hướng dẫn sử dụng](#-hướng-dẫn-sử-dụng)
@@ -30,12 +30,11 @@
 
 ## Thành viên Nhóm
 
-| Họ tên | MSSV | Vai trò |
-| --- | --- | --- |
-| Tạ Ngọc Bảo Ngân | 31251020415 | Thiết kế Winforms & Tích hợp code |
-| Nguyễn Ngọc Vân Lâm | 31251022996 | Code xử lý chuyển đổi bài hát và viết báo cáo |
-| Nguyễn Trang Nhật Mai | 31251022338 | Thiết kế và cài đặt cấu trúc dữ liệu |
-| Trần Nguyễn Quỳnh Trâm | 31251024490 | Viết báo cáo, thuyết trình |
+| Họ tên | MSSV |
+| --- | --- |
+| Tạ Ngọc Bảo Ngân | 31251020415 |
+| Nguyễn Trang Nhật Mai | 31251022338 |
+| Trần Nguyễn Quỳnh Trâm | 31251024490 |
 
 ---
 ## Báo cáo
@@ -46,11 +45,8 @@
 
 ## Giới thiệu
 
-**Melosoul** là ứng dụng nghe nhạc desktop chạy trên Windows, được phát triển trong khuôn khổ môn học **Cấu trúc Dữ liệu và Giải thuật** tại **Trường Đại học Kinh tế TP.HCM (UEH)**.
+**Melosoul** là ứng dụng nghe nhạc desktop chạy trên Windows, được phát triển trong khuôn khổ môn học **Lập trình hướng đối tượng** tại **Trường Đại học Kinh tế TP.HCM (UEH)**.
 
-Điểm trọng tâm của đề tài là tự cài đặt hoàn toàn cấu trúc **Doubly Linked List** — không sử dụng `LinkedList<T>` có sẵn của .NET — và khai thác đặc tính hai chiều của nó để xây dựng các tính năng phát nhạc tự nhiên: phát tiếp theo, phát bài trước, lặp lại, v.v.
-
-Ngoài phần CTDL bắt buộc, nhóm đã mở rộng thêm nhiều tính năng thực tế như tìm kiếm Trie, sắp xếp Merge Sort, xử lý đa luồng, đọc album art từ ID3 tag, và lưu playlist tự động.
 
 ---
 
@@ -92,96 +88,26 @@ Ngoài phần CTDL bắt buộc, nhóm đã mở rộng thêm nhiều tính năn
 
 ---
 
-## Cấu trúc Dữ liệu & Thuật toán
+## Áp dụng 4 tính chất OOP
 
-### 1. Doubly Linked List — `PlaylistLinkedList`
+Dự án Melosoul áp dụng chặt chẽ 4 tính chất cơ bản của Lập trình Hướng đối tượng (OOP) để đảm bảo mã nguồn rõ ràng, dễ bảo trì và an toàn:
 
-CTDL trọng tâm của toàn bộ dự án, được cài đặt hoàn toàn từ đầu trong `DataStructures/PlaylistLinkedList.cs`.
+### 1. Tính Đóng gói (Encapsulation)
+- **Che giấu dữ liệu nội bộ:** Lớp `PlaylistLinkedList` hoàn toàn che giấu cấu trúc `Node` bên trong và cách quản lý các con trỏ `_head`, `_tail`, `_current`. Giao diện UI (`PlayerForm`) chỉ tương tác thông qua các phương thức public an toàn như `AddLast()`, `Next()`, `Prev()`.
+- **Đồng bộ hóa (Thread Safety) ẩn:** Cơ chế khóa đa luồng `ReaderWriterLockSlim` được đóng gói hoàn toàn bên trong `PlaylistLinkedList`. Các tiến trình ngầm (Background tasks) và UI thread không bao giờ phải lo lắng về việc xung đột dữ liệu.
+- **Custom Controls độc lập:** `CustomVolumeSlider` và `CustomPlaylistScrollBar` tự quản lý toàn bộ logic tính toán tọa độ chuột (`OnMouseMove`) và vẽ đồ họa GDI+ (`OnPaint`), chỉ bộc lộ các Property/Event cơ bản ra bên ngoài.
 
-```
-HEAD <-> [Song A] <-> [Song B] <-> [Song C] <-> TAIL
-                          ^
-                       _current (bai dang phat)
-```
+### 2. Tính Kế thừa (Inheritance)
+- **Kiến trúc dữ liệu:** Lớp `Song` (đại diện cho một bài hát) được kế thừa từ lớp cơ sở trừu tượng `MediaFile`. Nhờ đó, `Song` tự động có sẵn các thuộc tính nền tảng như `Id`, `Title`, `FilePath` từ lớp cha mà không cần định nghĩa lại.
+- **Tái sử dụng UI Control:** Các custom control kế thừa trực tiếp từ các control có sẵn của .NET WinForms (như `Panel` và `Control`), giúp tái sử dụng toàn bộ nền tảng quản lý sự kiện (event-routing) và handle cửa sổ của hệ điều hành.
 
-Mỗi `Node` lưu: `Data` (Song), `Next` (con trỏ tiếp theo), `Prev` (con trỏ phía trước).
+### 3. Tính Đa hình (Polymorphism)
+- **Ghi đè phương thức (Overriding):** Lớp `Song` ghi đè phương thức abstract `GetDisplayText()` của `MediaFile` để cung cấp cách hiển thị riêng (hiển thị `Title - Artist`). Nếu sau này dự án mở rộng thêm class `VideoFile` kế thừa từ `MediaFile`, nó có thể tự định nghĩa `GetDisplayText()` theo cách khác biệt.
+- **Liên kết động (Dynamic Binding):** Bất kỳ phương thức nào nhận tham số kiểu `MediaFile` đều có thể nhận một object kiểu `Song`, và khi gọi `GetDisplayText()`, nó sẽ tự động chạy mã của lớp `Song` ở thời điểm thực thi (runtime).
 
-**Bảng độ phức tạp các thao tác:**
-
-| Thao tác | Độ phức tạp | Mô tả |
-| :--- | :---: | :--- |
-| `AddFirst(song)` | O(1) | Thêm vào đầu danh sách |
-| `AddLast(song)` | O(1) | Thêm vào cuối danh sách |
-| `Remove(id)` | O(1) | Xóa node bằng ID (tra qua Dictionary) |
-| `MoveTo(id)` | O(1) | Di chuyển con trỏ `_current` đến bài chỉ định |
-| `Next()` | O(1) | Chuyển sang bài tiếp theo, hỗ trợ Repeat All |
-| `Prev()` | O(1) | Chuyển về bài trước, hỗ trợ Repeat All |
-| `GetById(id)` | O(1) | Lấy Song theo ID (Read Lock) |
-| `UpdateSongMetadata` | O(k) | Cập nhật tên/nghệ sĩ, tự cập nhật Trie index |
-| `ToList()` | O(n) | Duyệt và trả về danh sách |
-| `Find(keyword)` | O(k + m) | Tìm kiếm multi-token qua Trie |
-| `Sort()` | O(n log n) | Merge Sort bottom-up tại chỗ |
-| `Shuffle()` | O(n) | Fisher-Yates trên mảng tạm |
-| `Clear()` | O(1) | Đặt lại toàn bộ danh sách |
-
-> **Ghi chú:** k = độ dài keyword, m = kích thước tập kết quả nhỏ nhất trong Trie
-
----
-
-### 2. Trie — Tìm kiếm theo Prefix
-
-Cấu trúc **Trie** nhúng bên trong `PlaylistLinkedList`, hỗ trợ tìm kiếm theo prefix O(k) thay vì O(n).
-
-**Cách hoạt động:**
-
-1. Mỗi bài hát được tokenize thành các từ từ `Title` và `Artist` (lowercase, tách theo khoảng trắng và dấu `-_,.`)
-2. Mỗi token được insert vào Trie; mỗi node trên đường đi lưu tham chiếu đến `Node` tương ứng
-3. Tìm kiếm nhiều từ khóa trả về **giao** của các tập kết quả — tập nhỏ nhất làm gốc để tối ưu bộ nhớ
-
-```
-Vi du: Tim "son tung"
-  Trie.SearchPrefix("son")  --> {NodeA, NodeB, NodeC}
-  Trie.SearchPrefix("tung") --> {NodeA, NodeD}
-  Ket qua = {NodeA}
-```
-
----
-
-### 3. Merge Sort — Bottom-Up, tại chỗ trên Linked List
-
-Cài đặt theo chiến lược **bottom-up iterative** — không đệ quy, không mảng phụ, sort trực tiếp trên con trỏ.
-
-```
-Buoc 1 (step=1): Merge tung cap node  [A|B] [C|D] [E|F] ...
-Buoc 2 (step=2): Merge tung nhom 4   [ABCD] [EFGH] ...
-Buoc 4 (step=4): Merge tung nhom 8   ...
-```
-
-Tiêu chí: tên bài hát (A→Z), tiebreak theo tên nghệ sĩ. Con trỏ `_current` được duy trì đúng sau sort qua `_idIndex`.
-
----
-
-### 4. Fisher-Yates Shuffle
-
-```csharp
-var nodes = new Node[Count];
-// Thu thap tat ca node vao mang tam, sau do:
-for (int n = nodes.Length - 1; n > 0; n--)
-{
-    int k = _rng.Next(n + 1);
-    (nodes[k], nodes[n]) = (nodes[n], nodes[k]);
-}
-// Ket noi lai con tro Prev/Next
-```
-
----
-
-### 5. Thread Safety — ReaderWriterLockSlim
-
-| Loại Lock | Các thao tác được bảo vệ |
-| :---: | :--- |
-| **Read Lock** | `CurrentSong`, `ToList()`, `Find()`, `GetById()` — nhiều luồng đọc đồng thời |
-| **Write Lock** | `Add`, `Remove`, `MoveTo`, `Next`, `Prev`, `Sort`, `Shuffle`, `UpdateSongMetadata` — chỉ 1 luồng ghi |
+### 4. Tính Trừu tượng (Abstraction)
+- **Giao diện hợp đồng (Interface):** Hệ thống lưu trữ sử dụng Interface `IPlaylistStorage` định nghĩa một hợp đồng trừu tượng gồm 2 hàm cơ bản: `Save()` và `Load()`.
+- **Linh hoạt và dễ mở rộng:** Lớp `AutoSaveService` hiện tại triển khai `IPlaylistStorage` để lưu playlist dưới định dạng văn bản (text). Nhờ tính trừu tượng này, sau này có thể dễ dàng tạo thêm `JsonPlaylistStorage` hay `DatabasePlaylistStorage` và cắm (plug) vào ứng dụng mà không làm ảnh hưởng tới các đoạn code đang gọi hàm lưu trữ.
 
 ---
 
@@ -449,6 +375,49 @@ Dùng Base64 để đảm bảo ký tự đặc biệt (tiếng Việt, dấu `|
 | 6 | Lưu vào cache để không xử lý lại |
 
 Cách này giải quyết trường hợp file MP3 VBR (Variable Bit Rate) mà WMP thường báo sai thời lượng.
+
+### Thiết kế Custom Controls
+
+Cả hai control được vẽ hoàn toàn bằng GDI+ (`OnPaint`), không dùng control mặc định của Windows:
+
+| Control | Đặc điểm |
+| :--- | :--- |
+| `CustomPlaylistScrollBar` | Track và thumb vẽ bằng `GraphicsPath` góc bo tròn. 3 trạng thái thumb: bình thường / hover / kéo. Chiều cao thumb proportional theo `viewportSize / totalItems`. |
+| `CustomVolumeSlider` | Track ngang với phần fill màu từ đầu đến vị trí thumb. Thumb hình tròn với hiệu ứng hover. Hỗ trợ kéo chuột mượt mà. |
+
+---
+O(1) — chỉnh lại 2 con trỏ |
+| Repeat / vòng lặp | Phải kiểm tra boundary thủ công | Cấu trúc tự nhiên hỗ trợ |
+| Insert đầu danh sách | O(n) | O(1) |
+
+### Tại sao `_idIndex` (Dictionary) tồn tại song song với LinkedList?
+
+`Dictionary<string, Node>` cho phép tra cứu node theo ID trong O(1) — cần thiết cho `Remove(id)`, `MoveTo(id)`, `GetById(id)`, và duy trì đúng `_current` sau khi `Sort()`.
+
+### AutoSave — Định dạng lưu trữ v2
+
+Playlist được tự động lưu tại `%AppData%\Melosoul\autosave.txt`, mỗi dòng:
+
+```
+v2|<Base64(Title)>|<Base64(Artist)>|<Base64(FilePath)>
+```
+
+Dùng Base64 để đảm bảo ký tự đặc biệt (tiếng Việt, dấu `|`) không gây lỗi khi parse. `AutoSaveService` tự nhận biết định dạng `v2` và backward-compatible với format cũ.
+
+### Xử lý thời lượng bài hát — Duration Resolution
+
+`MediaMetadataService` (dùng khi load bài hát mới) sử dụng chiến lược đa nguồn để tính toán thời lượng chính xác, trong khi `DurationService` đóng vai trò là cơ chế fallback nhanh. Quy trình của `MediaMetadataService`:
+
+| Bước | Hành động |
+| :---: | :--- |
+| 1 | Kiểm tra `ConcurrentDictionary` cache — trả về ngay nếu có |
+| 2 | Thử đọc từ TagLibSharp (metadata tag của file) |
+| 3 | Thử đọc từ Windows Media Player COM API |
+| 4 | Nếu 2 nguồn lệch nhau > 15% → probe bằng cách phát thật (volume = 0) |
+| 5 | Chọn kết quả gần với probe nhất, ưu tiên TagLib cho `.mp3` |
+| 6 | Lưu vào cache để không xử lý lại |
+
+Cách này giải quyết triệt để trường hợp file MP3 VBR (Variable Bit Rate) mà WMP thường báo sai thời lượng.
 
 ### Thiết kế Custom Controls
 

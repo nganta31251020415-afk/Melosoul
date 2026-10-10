@@ -67,6 +67,7 @@
     <Compile Include="Helpers\CustomVolumeSlider.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="Models\MediaFile.cs" />
     <Compile Include="Models\Song.cs" />
     <Compile Include="Forms\PlayerForm.cs">
       <SubType>Form</SubType>
@@ -94,6 +95,7 @@
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Services\AlbumArtService.cs" />
+    <Compile Include="Services\IPlaylistStorage.cs" />
     <Compile Include="Services\AutoSaveService.cs" />
     <Compile Include="Services\AppText.cs" />
     <Compile Include="Services\DurationService.cs" />

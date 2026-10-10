@@ -190,11 +190,6 @@ namespace Melosoul
         private void AutoNext()
         {
             System.Threading.Interlocked.Exchange(ref _autoNextQueued, 0);
-            if (chkRepeatOne.Checked && _playlist.CurrentSong != null)
-            {
-                Song currentSong = _playlist.CurrentSong;
-                if (IsValidFile(currentSong)) { PlaySong(currentSong); RefreshPlaylistUI(); return; }
-            }
 
             int maxSkip = _playlist.Count;
             int skipped = 0;
@@ -220,7 +215,7 @@ namespace Melosoul
             {
                 System.Threading.Interlocked.Exchange(ref _autoNextQueued, 0);
                 _wmp.URL = song.FilePath;
-                lblCurrentSong.Text = song.Title;
+                lblCurrentSong.Text = song.GetDisplayText();
                 lblArtist.Text = song.Artist;
                 lblStatus.Text = $"🎵 Đang phát: {song.Title}";
                 UpdateAlbumCover(song);

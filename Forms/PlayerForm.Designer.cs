@@ -1,4 +1,4 @@
-﻿namespace Melosoul
+namespace Melosoul
 {
     partial class PlayerForm
     {
@@ -422,6 +422,7 @@
             this.chkRepeatOne.TabIndex = 13;
             this.chkRepeatOne.Text = "🔂 Repeat One";
             this.chkRepeatOne.UseVisualStyleBackColor = true;
+            this.chkRepeatOne.CheckedChanged += new System.EventHandler(this.chkRepeatOne_CheckedChanged);
             // 
             // chkRepeatAll
             // 
